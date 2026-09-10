@@ -74,4 +74,31 @@ export const loginUser = async ({ email, password, deviceId = "web" }) => {
     };
 };
 
+export const logoutUser = async (userId, deviceId = "web") => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error("User not found");
+    }
 
+    const device = user.devices.find((d) => d.deviceId === deviceId);
+    if (device) {
+        device.tokenVersion += 1;
+        await user.save();
+    }
+    return { success: true };
+};
+
+export const logoutAllDevices = async (userId) => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    // Increment tokenVersion for all devices
+    user.devices.forEach((device) => {
+        device.tokenVersion += 1;
+    });
+    
+    await user.save();
+    return { success: true };
+};
