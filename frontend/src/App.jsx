@@ -1,9 +1,17 @@
-
+import React, { useState } from 'react';
+import SignUp from './pages/SignUp';
+import Login from './pages/Login';
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('signup');
+
   return (
     <>
-      <p className="text-red-500 bg-blue-500">Hello</p>
+      {currentPage === 'signup' ? (
+        <SignUp onNavigateToLogin={() => setCurrentPage('login')} />
+      ) : (
+        <Login onNavigateToSignUp={() => setCurrentPage('signup')} />
+      )}
     </>
   )
 }
