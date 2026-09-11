@@ -80,3 +80,55 @@ export const login = async (req, res) => {
     }
 };
 
+export const logout = async (req, res) => {
+    try {
+        const { deviceId } = req.body;
+        const { userId } = req.body; 
+
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "Please provide userId" });
+        }
+
+        await authService.logoutUser(userId, deviceId);
+
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+
+        res.status(200).json({
+            success: true,
+            message: "User logged out successfully"
+        });
+    } catch (error) {
+        if (error.message === "User not found") {
+            return res.status(404).json({ success: false, message: error.message });
+        }
+        console.error("Error in logout controller:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+export const logoutAll = async (req, res) => {
+    try {
+        const { userId } = req.body; 
+
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "Please provide userId" });
+        }
+
+        await authService.logoutAllDevices(userId);
+
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+
+        res.status(200).json({
+            success: true,
+            message: "User logged out from all devices successfully"
+        });
+    } catch (error) {
+        if (error.message === "User not found") {
+            return res.status(404).json({ success: false, message: error.message });
+        }
+        console.error("Error in logoutAll controller:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
