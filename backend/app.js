@@ -10,7 +10,11 @@ import apiRoutes from './src/routes/index.js';
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: "*", mehtods: ["GET", "POST", "PUT", "DELETE"] }));
+app.use(cors({ 
+    origin: process.env.FRONTEND_URL || "http://localhost:5173", 
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true
+}));
 
 const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),

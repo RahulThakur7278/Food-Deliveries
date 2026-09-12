@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
 import RoleSelector from '../components/RoleSelector';
 import { FcGoogle } from 'react-icons/fc';
+import { useRegisterMutation } from '../features/auth/queries';
 
-const SignUp = ({ onNavigateToLogin }) => {
+const SignUp = () => {
+  const navigate = useNavigate();
+  const registerMutation = useRegisterMutation();
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     mobile: '',
     password: '',
-    role: 'user'
+    role: ''
   });
 
   const handleChange = (e) => {
@@ -24,14 +29,26 @@ const SignUp = ({ onNavigateToLogin }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Sign Up Data:', formData);
+    registerMutation.mutate(formData, {
+      onSuccess: () => {
+        // Handle successful registration navigation
+        // navigate('/dashboard');
+      },
+      onError: (error) => {
+        console.error('Registration failed', error);
+      }
+    });
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-[#f9f9f9] p-5">
+    <div className="flex justify-center items-center min-h-screen  p-5">
       <div className="bg-white w-full max-w-[400px] p-8 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.05)]">
-        <h1 className="text-primary text-2xl font-bold mb-2 mt-0">Foodies</h1>
+        <h1 className="text-primary text-2xl font-bold mb-2 mt-0">Hungry world</h1>
         <p className="text-[#666] text-[14px] mb-6 leading-relaxed">Create your account to get started with delicious food deliveries</p>
+
+        {registerMutation.isError && (
+          <p className="text-red-500 text-sm mb-4">Registration failed. Please try again.</p>
+        )}
 
         <form onSubmit={handleSubmit} className="mb-6">
           <InputField
@@ -78,7 +95,9 @@ const SignUp = ({ onNavigateToLogin }) => {
             onChange={handleRoleChange}
           />
 
-          <Button fullWidth type="submit" variant="primary">Sign Up</Button>
+          <Button fullWidth type="submit" variant="primary">
+            {registerMutation.isPending ? 'Signing Up...' : 'Sign Up'}
+          </Button>
 
           <div className="mt-3">
             <Button fullWidth variant="outline" type="button" icon={<FcGoogle size={20} />}>
@@ -88,7 +107,7 @@ const SignUp = ({ onNavigateToLogin }) => {
         </form>
 
         <div className="text-center text-[14px] text-[#666]">
-          Already have an account? <span className="text-primary font-medium cursor-pointer transition-colors duration-200 hover:text-primary-hover" onClick={onNavigateToLogin}>Sign In</span>
+          Already have an account? <span className="text-primary font-medium cursor-pointer transition-colors duration-200 hover:text-primary-hover" onClick={() => navigate('/login')}>Sign In</span>
         </div>
       </div>
     </div>
