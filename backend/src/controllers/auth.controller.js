@@ -83,7 +83,7 @@ export const login = async (req, res) => {
 export const logout = async (req, res) => {
     try {
         const { deviceId } = req.body;
-        const { userId } = req.body; 
+        const { userId } = req.body;
 
         if (!userId) {
             return res.status(400).json({ success: false, message: "Please provide userId" });
@@ -109,7 +109,7 @@ export const logout = async (req, res) => {
 
 export const logoutAll = async (req, res) => {
     try {
-        const { userId } = req.body; 
+        const { userId } = req.body;
 
         if (!userId) {
             return res.status(400).json({ success: false, message: "Please provide userId" });
@@ -132,3 +132,74 @@ export const logoutAll = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+export const sendOTP = async (req, res) => {
+    try {
+        const identifier = req.body.identifier || req.body.email;
+        console.log("identifier controller", identifier);
+        if (!identifier) {
+            return res.status(400).json({ success: false, message: "Please provide identifier (email)" });
+        }
+        const { otp, expireTime } = await authService.sendOTP(identifier);
+        res.status(200).json({
+            success: true,
+            message: `OTP sent successfully to ${identifier} `,
+            data: {  //in production only send expire time not the otp because used node mailer to send otp in client email
+                otp,
+                expireTime
+            }
+        });
+    } catch (error) {
+        if (error.message === "User with this email  not found") {
+            return res.status(404).json({ success: false, message: error.message });
+        }
+        console.error("Error in sendOTP controller:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+export const verifyOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({ success: false, message: "Please provide identifier and otp" });
+        }
+        const { user } = await authService.verifyOtp(email, otp);
+        res.status(200).json({
+            success: true,
+            message: "OTP verified successfully",
+            data: user
+        });
+    } catch (error) {
+        if (error.message === "Invalid otp" || error.message === "OTP already used") {
+            return res.status(401).json({ success: false, message: error.message });
+        }
+        console.error("Error in verifyOtp controller:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { email, otp, password } = req.body;
+        console.log("email", email);
+        console.log("otp", otp);
+        console.log("password", password);
+        if (!email || !otp || !password) {
+            return res.status(400).json({ success: false, message: "Please provide identifier, otp and password" });
+        }
+        const { user } = await authService.resetPassword(email, otp, password);
+        res.status(200).json({
+            success: true,
+            message: "Password reset successfully",
+            data: user
+        });
+    } catch (error) {
+        if (error.message === "Invalid otp" || error.message === "OTP already used" || error.message === "Please verify OTP first") {
+            return res.status(401).json({ success: false, message: error.message });
+        }
+        console.error("Error in resetPassword controller:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}

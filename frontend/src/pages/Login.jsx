@@ -60,6 +60,15 @@ const Login = () => {
             value={formData.password} 
             onChange={handleChange} 
           />
+
+          <div className="flex justify-end mb-4">
+            <span 
+              className="text-[13px] text-primary cursor-pointer hover:underline"
+              onClick={() => navigate('/forgot-password')}
+            >
+              Forgot Password?
+            </span>
+          </div>
           
           <Button fullWidth type="submit" variant="primary">
             {loginMutation.isPending ? 'Signing In...' : 'Sign In'}

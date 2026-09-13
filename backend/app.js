@@ -1,11 +1,10 @@
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 // import compression from "compression";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
-dotenv.config();
 import apiRoutes from './src/routes/index.js';
 
 const app = express();
