@@ -17,7 +17,7 @@ const user = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["admin", "user", "deliveryBoy"]
+        enum: ["user", "deliveryBoy", "owner"]
     },
     devices: [{
         deviceId: {

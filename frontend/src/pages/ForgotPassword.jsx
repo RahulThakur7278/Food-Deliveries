@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
+import { useSendOtpMutation, useVerifyOtpMutation, useResetPasswordMutation } from '../features/auth/queries';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -18,30 +19,53 @@ const ForgotPassword = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const sendOtpMutation = useSendOtpMutation();
+  const verifyOtpMutation = useVerifyOtpMutation();
+  const resetPasswordMutation = useResetPasswordMutation();
+
   const handleSendOtp = (e) => {
     e.preventDefault();
-    // Simulate API call to send OTP
-    if (formData.email) {
-      setStep(2);
-    }
+    if (!formData.email) return;
+    
+    sendOtpMutation.mutate(
+      { email: formData.email },
+      {
+        onSuccess: () => setStep(2),
+        onError: (error) => alert(error.response?.data?.message || "Failed to send OTP")
+      }
+    );
   };
 
   const handleVerifyOtp = (e) => {
     e.preventDefault();
-    // Simulate API call to verify OTP
-    if (formData.otp) {
-      setStep(3);
-    }
+    if (!formData.otp) return;
+
+    verifyOtpMutation.mutate(
+      { email: formData.email, otp: formData.otp },
+      {
+        onSuccess: () => setStep(3),
+        onError: (error) => alert(error.response?.data?.message || "Invalid OTP")
+      }
+    );
   };
 
   const handleResetPassword = (e) => {
     e.preventDefault();
-    // Simulate API call to reset password
-    if (formData.newPassword === formData.confirmPassword) {
-      navigate('/login');
-    } else {
+    if (formData.newPassword !== formData.confirmPassword) {
       alert("Passwords do not match");
+      return;
     }
+
+    resetPasswordMutation.mutate(
+      { email: formData.email, otp: formData.otp, password: formData.newPassword },
+      {
+        onSuccess: () => {
+          alert("Password reset successfully!");
+          navigate('/login');
+        },
+        onError: (error) => alert(error.response?.data?.message || "Failed to reset password")
+      }
+    );
   };
 
   return (
@@ -64,8 +88,8 @@ const ForgotPassword = () => {
                 onChange={handleChange} 
                 required
               />
-              <Button fullWidth type="submit" variant="primary">
-                Send OTP
+              <Button fullWidth type="submit" variant="primary" disabled={sendOtpMutation.isPending}>
+                {sendOtpMutation.isPending ? 'Sending...' : 'Send OTP'}
               </Button>
             </form>
           </>
@@ -86,8 +110,8 @@ const ForgotPassword = () => {
                 onChange={handleChange} 
                 required
               />
-              <Button fullWidth type="submit" variant="primary">
-                Verify OTP
+              <Button fullWidth type="submit" variant="primary" disabled={verifyOtpMutation.isPending}>
+                {verifyOtpMutation.isPending ? 'Verifying...' : 'Verify OTP'}
               </Button>
             </form>
           </>
@@ -117,8 +141,8 @@ const ForgotPassword = () => {
                 onChange={handleChange} 
                 required
               />
-              <Button fullWidth type="submit" variant="primary">
-                Reset Password
+              <Button fullWidth type="submit" variant="primary" disabled={resetPasswordMutation.isPending}>
+                {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
               </Button>
             </form>
           </>
