@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
 import { FcGoogle } from 'react-icons/fc';
-import { useLoginMutation } from '../features/auth/queries';
+import { useLoginMutation, useGoogleSignInMutation } from '../features/auth/queries';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../../utils/firebase';
 
 const Login = () => {
   const navigate = useNavigate();
   const loginMutation = useLoginMutation();
+  const googleSignInMutation = useGoogleSignInMutation();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -17,6 +20,29 @@ const Login = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      googleSignInMutation.mutate(
+        { email: result.user.email },
+        {
+          onSuccess: (data) => {
+            alert("Signed in with Google successfully!");
+            // navigate('/dashboard');
+          },
+          onError: (error) => {
+            alert(error.response?.data?.message || "User does not exist. Please sign up first.");
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Firebase Google Sign-In error:", error);
+      alert("Failed to authenticate with Google");
+    }
   };
 
   const handleSubmit = (e) => {
@@ -75,8 +101,8 @@ const Login = () => {
           </Button>
           
           <div className="mt-3">
-            <Button fullWidth variant="outline" type="button" icon={<FcGoogle size={20} />}>
-              Sign in with Google
+            <Button fullWidth variant="outline" type="button" icon={<FcGoogle size={20} />} onClick={handleGoogleSignIn} disabled={googleSignInMutation.isPending}>
+              {googleSignInMutation.isPending ? 'Signing in with Google...' : 'Sign in with Google'}
             </Button>
           </div>
         </form>
