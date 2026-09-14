@@ -4,11 +4,14 @@ import InputField from '../components/InputField';
 import Button from '../components/Button';
 import RoleSelector from '../components/RoleSelector';
 import { FcGoogle } from 'react-icons/fc';
-import { useRegisterMutation } from '../features/auth/queries';
-
+import { useRegisterMutation, useGoogleSignUpMutation } from '../features/auth/queries';
+import { GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup } from 'firebase/auth';
+import { auth } from '../../utils/firebase';
 const SignUp = () => {
   const navigate = useNavigate();
   const registerMutation = useRegisterMutation();
+  const googleSignUpMutation = useGoogleSignUpMutation();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -25,6 +28,39 @@ const SignUp = () => {
 
   const handleRoleChange = (role) => {
     setFormData(prev => ({ ...prev, role }));
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (!formData.mobile) {
+      alert("Please enter your mobile number first");
+      return;
+    }
+
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      googleSignUpMutation.mutate(
+        {
+          email: result.user.email,
+          name: result.user.displayName,
+          phone: formData.mobile,
+          role: formData.role
+        },
+        {
+          onSuccess: (data) => {
+            alert("Signed in with Google successfully!");
+            navigate('/');
+          },
+          onError: (error) => {
+            alert(error.response?.data?.message || "Failed to sign in with Google on the server");
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Firebase Google Sign-In error:", error);
+      alert("Failed to authenticate with Google");
+    }
   };
 
   const handleSubmit = (e) => {
@@ -100,7 +136,7 @@ const SignUp = () => {
           </Button>
 
           <div className="mt-3">
-            <Button fullWidth variant="outline" type="button" icon={<FcGoogle size={20} />}>
+            <Button fullWidth variant="outline" type="button" icon={<FcGoogle size={20} />} onClick={handleGoogleSignIn}>
               Sign up with Google
             </Button>
           </div>
