@@ -239,6 +239,20 @@ export const googleSignUp = async (req, res) => {
     }
 }
 
+export const getMe = async (req, res) => {
+    try {
+        // req.user is attached by the verifyJWT middleware
+        res.status(200).json({
+            success: true,
+            message: "User details fetched successfully",
+            data: req.user
+        });
+    } catch (error) {
+        console.error("Error in getMe controller:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}
+
 export const googleSignIn = async (req, res) => {
     try {
         const { email } = req.body;
