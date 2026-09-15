@@ -32,7 +32,11 @@ const user = new mongoose.Schema({
     password: {
         type: String,
         required: true
-    }
+    },
+    documents: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Document'
+    }]
 });
 
 export default mongoose.model("User", user);
