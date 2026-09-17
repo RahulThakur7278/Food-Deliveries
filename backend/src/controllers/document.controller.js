@@ -1,6 +1,5 @@
-import Document from '../models/document.model.js';
-import User from '../models/user.model.js';
 import cloudinaryInstance from '../utils/cloudinary.js';
+import { createDocument, fetchAllDocuments } from '../services/document.service.js';
 
 export const uploadDocument = async (req, res) => {
     try {
@@ -8,14 +7,6 @@ export const uploadDocument = async (req, res) => {
         
         // Use user ID from req.user if populated by auth middleware, else fallback to req.body
         const uId = req.user?._id || userId;
-        
-        let userRecord = null;
-        if (uId) {
-            userRecord = await User.findById(uId);
-            if (!userRecord) {
-                return res.status(404).json({ success: false, message: 'User not found' });
-            }
-        }
         
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No file provided' });
@@ -34,26 +25,21 @@ export const uploadDocument = async (req, res) => {
             file_path = cloudinaryResult.secure_url;
         } else {
             // In development, keep the file in the local uploads directory
-            // req.file.filename gives the file name. We serve it statically at /uploads/
             file_path = `/uploads/${req.file.filename}`;
         }
 
-        // Create the document record in the database
-        const newDocument = new Document({
+        // Prepare document data
+        const documentData = {
             doc_name: doc_name || req.file.originalname,
             file_path,
             mime_type,
             doc_category,
             doc_owner_type,
             user: uId || undefined
-        });
+        };
 
-        await newDocument.save();
-
-        if (userRecord) {
-            userRecord.documents.push(newDocument._id);
-            await userRecord.save();
-        }
+        // Call service to handle DB logic
+        const newDocument = await createDocument(documentData, uId);
 
         res.status(201).json({
             success: true,
@@ -63,13 +49,16 @@ export const uploadDocument = async (req, res) => {
 
     } catch (error) {
         console.error('Upload document error:', error);
+        if (error.message === 'User not found') {
+            return res.status(404).json({ success: false, message: error.message });
+        }
         res.status(500).json({ success: false, message: 'Server error during document upload' });
     }
 };
 
 export const getAllDocuments = async (req, res) => {
     try {
-        const documents = await Document.find().sort({ createdAt: -1 });
+        const documents = await fetchAllDocuments();
         res.status(200).json({
             success: true,
             data: documents
