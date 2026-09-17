@@ -32,9 +32,18 @@ const itemSchema = new mongoose.Schema({
     },
     shop: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Shop"
+        ref: "Shop",
+        required: true
     }
 
 }, { timestamps: true })
+
+// Indexes for performance (Search, Filtering, and Foreign Keys)
+itemSchema.index({ name: 'text', description: 'text' });
+itemSchema.index({ shop: 1 });
+itemSchema.index({ category: 1 });
+itemSchema.index({ food_type: 1 });
+itemSchema.index({ price: 1 });
+
 const Item = mongoose.model("Item", itemSchema)
 export default Item
