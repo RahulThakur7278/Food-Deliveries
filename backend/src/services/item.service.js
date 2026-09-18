@@ -13,32 +13,20 @@ export const createItem = async (itemData, userId) => {
         throw new Error("Unauthorized: Only the shop owner can add items");
     }
 
-    // Use transaction to ensure Item is created AND Shop's items array is updated atomically
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-        const [newItem] = await Item.create([{
-            name,
-            description,
-            price,
-            image,
-            category,
-            food_type,
-            shop
-        }], { session });
-        
-        shopDetails.items.push(newItem._id);
-        await shopDetails.save({ session });
-        
-        await session.commitTransaction();
-        return newItem.toObject(); 
-    } catch (error) {
-        await session.abortTransaction();
-        throw error;
-    } finally {
-        session.endSession();
-    }
+    const [newItem] = await Item.create([{
+        name,
+        description,
+        price,
+        image,
+        category,
+        food_type,
+        shop
+    }]);
+    
+    shopDetails.items.push(newItem._id);
+    await shopDetails.save();
+    
+    return newItem.toObject();
 };
 
 export const getItemsByShopId = async (shopId, queryParams = {}) => {
@@ -136,22 +124,10 @@ export const deleteItem = async (itemId, userId) => {
         throw new Error("Unauthorized: Only the shop owner can delete this item");
     }
 
-    // Atomic deletion from Item collection and Shop's items array
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    await Item.findByIdAndDelete(itemId);
 
-    try {
-        await Item.findByIdAndDelete(itemId).session(session);
-
-        shopDetails.items = shopDetails.items.filter(id => id.toString() !== itemId.toString());
-        await shopDetails.save({ session });
-        
-        await session.commitTransaction();
-        return true;
-    } catch (error) {
-        await session.abortTransaction();
-        throw error;
-    } finally {
-        session.endSession();
-    }
+    shopDetails.items = shopDetails.items.filter(id => id.toString() !== itemId.toString());
+    await shopDetails.save();
+    
+    return true;
 };
