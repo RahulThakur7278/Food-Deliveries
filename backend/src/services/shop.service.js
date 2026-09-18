@@ -111,32 +111,20 @@ export const updateShop = async (id, updateData, userId) => {
 };
 
 export const deleteShop = async (id, userId) => {
-    // Start a transaction to ensure both Shop and its Items are deleted atomically
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-        const shop = await Shop.findById(id).session(session);
-        
-        if (!shop) {
-            throw new Error("Shop not found");
-        }
-        if (shop.owner.toString() !== userId.toString()) {
-            throw new Error("Unauthorized: Only the owner can delete this shop");
-        }
-
-        // 1. Delete all items belonging to this shop
-        await Item.deleteMany({ shop: id }).session(session);
-        
-        // 2. Delete the shop itself
-        await Shop.findByIdAndDelete(id).session(session);
-
-        await session.commitTransaction();
-        return true;
-    } catch (error) {
-        await session.abortTransaction();
-        throw error;
-    } finally {
-        session.endSession();
+    const shop = await Shop.findById(id);
+    
+    if (!shop) {
+        throw new Error("Shop not found");
     }
+    if (shop.owner.toString() !== userId.toString()) {
+        throw new Error("Unauthorized: Only the owner can delete this shop");
+    }
+
+    // 1. Delete all items belonging to this shop
+    await Item.deleteMany({ shop: id });
+    
+    // 2. Delete the shop itself
+    await Shop.findByIdAndDelete(id);
+
+    return true;
 };
