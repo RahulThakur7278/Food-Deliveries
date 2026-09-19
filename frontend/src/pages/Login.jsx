@@ -30,9 +30,12 @@ const Login = () => {
       googleSignInMutation.mutate(
         { email: result.user.email },
         {
-          onSuccess: (data) => {
+          onSuccess: (response) => {
             alert("Signed in with Google successfully!");
-            // navigate('/dashboard');
+            const role = response?.data?.role;
+            if (role === 'owner') navigate('/owner-dashboard');
+            else if (role === 'deliveryBoy') navigate('/delivery-dashboard');
+            else navigate('/user-dashboard');
           },
           onError: (error) => {
             alert(error.response?.data?.message || "User does not exist. Please sign up first.");
@@ -48,9 +51,11 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     loginMutation.mutate(formData, {
-      onSuccess: () => {
-        // Handle successful login navigation
-        // navigate('/dashboard'); 
+      onSuccess: (response) => {
+        const role = response?.data?.role;
+        if (role === 'owner') navigate('/owner-dashboard');
+        else if (role === 'deliveryBoy') navigate('/delivery-dashboard');
+        else navigate('/user-dashboard');
       },
       onError: (error) => {
         console.error('Login failed', error);
