@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
@@ -39,7 +38,7 @@ const SignUp = () => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      
+
       googleSignUpMutation.mutate(
         {
           email: result.user.email,
@@ -48,9 +47,12 @@ const SignUp = () => {
           role: formData.role
         },
         {
-          onSuccess: (data) => {
+          onSuccess: (response) => {
             alert("Signed in with Google successfully!");
-            navigate('/');
+            const role = response?.data?.role;
+            if (role === 'owner') navigate('/owner-dashboard');
+            else if (role === 'deliveryBoy') navigate('/delivery-dashboard');
+            else navigate('/user-dashboard');
           },
           onError: (error) => {
             alert(error.response?.data?.message || "Failed to sign in with Google on the server");
@@ -66,9 +68,11 @@ const SignUp = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     registerMutation.mutate(formData, {
-      onSuccess: () => {
-        // Handle successful registration navigation
-        // navigate('/dashboard');
+      onSuccess: (response) => {
+        const role = response?.data?.role;
+        if (role === 'owner') navigate('/owner-dashboard');
+        else if (role === 'deliveryBoy') navigate('/delivery-dashboard');
+        else navigate('/user-dashboard');
       },
       onError: (error) => {
         console.error('Registration failed', error);
