@@ -9,9 +9,9 @@ export const useRegisterMutation = () => {
   return useMutation({
     mutationFn: registerFn,
     onSuccess: (data) => {
-      // Assuming response contains `data: user` and tokens in cookies
+      // Assuming response contains `data: user` and tokens in payload
       if (data.success && data.data) {
-        dispatch(setCredentials({ user: data.data }));
+        dispatch(setCredentials({ user: data.data, accessToken: data.accessToken }));
       }
     },
   });
@@ -24,7 +24,7 @@ export const useLoginMutation = () => {
     mutationFn: loginFn,
     onSuccess: (data) => {
       if (data.success && data.data) {
-        dispatch(setCredentials({ user: data.data }));
+        dispatch(setCredentials({ user: data.data, accessToken: data.accessToken }));
       }
     },
   });
@@ -77,7 +77,7 @@ export const useGoogleSignUpMutation = () => {
     mutationFn: googleSignUpFn,
     onSuccess: (data) => {
       if (data.success && data.data) {
-        dispatch(setCredentials({ user: data.data }));
+        dispatch(setCredentials({ user: data.data, accessToken: data.accessToken }));
       }
     },
   });
@@ -90,7 +90,7 @@ export const useGoogleSignInMutation = () => {
     mutationFn: googleSignInFn,
     onSuccess: (data) => {
       if (data.success && data.data) {
-        dispatch(setCredentials({ user: data.data }));
+        dispatch(setCredentials({ user: data.data, accessToken: data.accessToken }));
       }
     },
   });

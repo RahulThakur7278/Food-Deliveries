@@ -14,16 +14,7 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
-
-const data = [
-  { name: 'Mon', orders: 400 },
-  { name: 'Tue', orders: 300 },
-  { name: 'Wed', orders: 550 },
-  { name: 'Thu', orders: 450 },
-  { name: 'Fri', orders: 700 },
-  { name: 'Sat', orders: 850 },
-  { name: 'Sun', orders: 600 },
-];
+import { useGetDashboardStatsQuery } from '../../features/owner/queries';
 
 const MetricCard = ({ title, value, icon, color }) => (
   <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:-translate-y-1 transition-transform duration-300">
@@ -38,6 +29,24 @@ const MetricCard = ({ title, value, icon, color }) => (
 );
 
 const DashboardHome = () => {
+  const { data: statsRes, isLoading, isError } = useGetDashboardStatsQuery();
+  
+  if (isLoading) {
+    return <div className="text-gray-500 font-medium">Loading dashboard stats...</div>;
+  }
+  
+  if (isError) {
+    return <div className="text-red-500 font-medium">Failed to load dashboard stats.</div>;
+  }
+
+  const stats = statsRes?.data || {
+    totalShops: 0,
+    totalItems: 0,
+    pendingOrders: 0,
+    completedOrders: 0,
+    chartData: []
+  };
+
   return (
     <div className="flex flex-col gap-6">
       
@@ -51,25 +60,25 @@ const DashboardHome = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard 
           title="Total Shops" 
-          value="12" 
+          value={stats.totalShops} 
           icon={<MdStorefront className="text-2xl text-blue-600" />}
           color="bg-blue-50"
         />
         <MetricCard 
           title="Total Food Items" 
-          value="145" 
+          value={stats.totalItems} 
           icon={<MdRestaurantMenu className="text-2xl text-orange-600" />}
           color="bg-orange-50"
         />
         <MetricCard 
           title="Pending Orders" 
-          value="24" 
+          value={stats.pendingOrders} 
           icon={<MdOutlinePendingActions className="text-2xl text-yellow-600" />}
           color="bg-yellow-50"
         />
         <MetricCard 
           title="Completed Orders" 
-          value="1,284" 
+          value={stats.completedOrders} 
           icon={<MdCheckCircleOutline className="text-2xl text-green-600" />}
           color="bg-green-50"
         />
@@ -85,7 +94,7 @@ const DashboardHome = () => {
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={data}
+              data={stats.chartData}
               margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
             >
               <defs>

@@ -10,13 +10,6 @@ export const register = async (req, res) => {
 
         const { user, accessToken, refreshToken } = await authService.registerUser({ name, email, phone, password, role, deviceId });
 
-        res.cookie('accessToken', accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 15 * 60 * 1000 // 15 minutes
-        });
-
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -49,13 +42,6 @@ export const login = async (req, res) => {
         }
 
         const { user, accessToken, refreshToken } = await authService.loginUser({ email, password, deviceId });
-
-        res.cookie('accessToken', accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 15 * 60 * 1000 // 15 minutes
-        });
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
@@ -91,7 +77,6 @@ export const logout = async (req, res) => {
 
         await authService.logoutUser(userId, deviceId);
 
-        res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
 
         res.status(200).json({
@@ -117,7 +102,6 @@ export const logoutAll = async (req, res) => {
 
         await authService.logoutAllDevices(userId);
 
-        res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
 
         res.status(200).json({
@@ -214,13 +198,6 @@ export const googleSignUp = async (req, res) => {
         const { user, accessToken, refreshToken } = await authService.googleSignUp({ email, name, phone, role });
 
         // Set cookies
-        res.cookie('accessToken', accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 15 * 60 * 1000 // 15 minutes
-        });
-
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -231,7 +208,8 @@ export const googleSignUp = async (req, res) => {
         res.status(200).json({
             success: true,
             message: "Google Sign-In successful",
-            data: user
+            data: user,
+            accessToken
         });
     } catch (error) {
         console.error("Error in googleSignUp controller:", error);
@@ -263,13 +241,6 @@ export const googleSignIn = async (req, res) => {
         const { user, accessToken, refreshToken } = await authService.googleSignIn({ email });
         
         // Set cookies
-        res.cookie('accessToken', accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 15 * 60 * 1000 // 15 minutes
-        });
-        
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -280,7 +251,8 @@ export const googleSignIn = async (req, res) => {
         res.status(200).json({
             success: true,
             message: "Google Log-In successful",
-            data: user
+            data: user,
+            accessToken
         });
     } catch (error) {
         if (error.message.includes("does not exist")) {
@@ -290,3 +262,34 @@ export const googleSignIn = async (req, res) => {
         res.status(500).json({ success: false, message: error.message || "Internal server error" });
     }
 }
+
+export const refresh = async (req, res) => {
+    try {
+        const incomingRefreshToken = req.cookies?.refreshToken;
+        
+        if (!incomingRefreshToken) {
+            return res.status(401).json({ success: false, message: "Unauthorized request - No refresh token provided" });
+        }
+
+        const { user, accessToken, refreshToken } = await authService.refreshTokens(incomingRefreshToken);
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Tokens refreshed successfully",
+            accessToken,
+            data: user
+        });
+
+    } catch (error) {
+        console.error("Error in refresh controller:", error);
+        res.clearCookie('refreshToken');
+        return res.status(401).json({ success: false, message: error.message || "Invalid refresh token" });
+    }
+};
