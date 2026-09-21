@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MdAdd, MdRestaurantMenu, MdEdit, MdDeleteOutline, MdFastfood } from 'react-icons/md';
-import Modal from './Modal';
+import Modal from '../ui/Modal';
 import AddFood from './AddFood';
-import ConfirmModal from './ConfirmModal';
+import ConfirmModal from '../ui/ConfirmModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getItemsByShopFn, deleteItemFn } from '../../features/item/api';
 import { getShopsFn } from '../../features/shop/api';

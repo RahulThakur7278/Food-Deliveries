@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { MdClose } from 'react-icons/md';
 
-const Modal = ({ isOpen, onClose, children }) => {
+const Modal = ({ isOpen, onClose, children, maxWidth = 'max-w-lg', hideCloseButton = false }) => {
   // Prevent body scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -25,14 +25,16 @@ const Modal = ({ isOpen, onClose, children }) => {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative bg-transparent rounded-2xl w-full max-w-lg z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div className={`relative bg-white rounded-2xl w-full ${maxWidth} shadow-xl z-10 max-h-[90vh] overflow-y-auto custom-scrollbar`}>
         {/* Close Button */}
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 z-20 bg-white hover:bg-gray-100 text-gray-500 rounded-full p-1 shadow-sm transition-colors"
-        >
-          <MdClose className="text-xl" />
-        </button>
+        {!hideCloseButton && (
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 z-20 bg-gray-50 hover:bg-gray-200 text-gray-500 rounded-full p-1.5 transition-colors"
+          >
+            <MdClose className="text-xl" />
+          </button>
+        )}
         
         {children}
       </div>

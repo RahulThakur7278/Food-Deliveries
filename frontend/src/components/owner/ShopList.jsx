@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { MdAdd, MdStorefront, MdLocationOn, MdEdit, MdDeleteOutline } from 'react-icons/md';
-import Modal from './Modal';
+import Modal from '../ui/Modal';
 import AddShop from './AddShop';
-import ConfirmModal from './ConfirmModal';
+import ConfirmModal from '../ui/ConfirmModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getShopsFn, deleteShopFn } from '../../features/shop/api';
 import { useSelector } from 'react-redux';
