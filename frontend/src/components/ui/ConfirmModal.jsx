@@ -4,8 +4,8 @@ import { MdWarning } from 'react-icons/md';
 
 const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="bg-white p-6 rounded-2xl w-full max-w-sm mx-auto shadow-xl flex flex-col items-center text-center">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-sm" hideCloseButton={true}>
+      <div className="p-6 flex flex-col items-center text-center">
         <div className="bg-red-50 h-16 w-16 rounded-full flex items-center justify-center mb-4">
           <MdWarning className="text-red-500 text-3xl" />
         </div>
