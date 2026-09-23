@@ -1,13 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MdRestaurantMenu } from 'react-icons/md';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createItemFn, updateItemFn } from '../../features/item/api';
+import InputField from '../ui/InputField';
+import SelectField from '../ui/SelectField';
+import TextAreaField from '../ui/TextAreaField';
+import Button from '../ui/Button';
 
-const AddFood = () => {
+const AddFood = ({ initialData = null, shopId, onClose }) => {
+  const queryClient = useQueryClient();
+  
   const [formData, setFormData] = useState({
     name: '',
     image: null,
-    price: 0,
+    price: '',
     category: '',
-    foodType: 'veg',
+    food_type: 'Veg',
+    description: '',
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        image: null,
+        price: initialData.price || '',
+        category: initialData.category || '',
+        food_type: initialData.food_type || 'Veg',
+        description: initialData.description || '',
+      });
+    }
+  }, [initialData]);
+
+  const createMutation = useMutation({
+    mutationFn: createItemFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['items', shopId] });
+      if (onClose) onClose();
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: updateItemFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['items', shopId] });
+      if (onClose) onClose();
+    }
   });
 
   const handleChange = (e) => {
@@ -20,95 +58,120 @@ const AddFood = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Add Food form submitted", formData);
+    const data = new FormData();
+    Object.keys(formData).forEach(key => {
+      if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
+        data.append(key, formData[key]);
+      }
+    });
+    
+    // Add shop ID
+    data.append('shop', shopId);
+
+    if (initialData) {
+      updateMutation.mutate({ itemId: initialData._id, itemData: data });
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
+  const isLoading = createMutation.isPending || updateMutation.isPending;
+
   return (
-    <div className="flex justify-center items-center w-full">
-      <div className="bg-white w-full max-w-[450px] p-8 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.05)] flex flex-col items-center">
-        
-        {/* Icon */}
-        <div className="bg-[#fff0ed] h-20 w-20 rounded-full flex items-center justify-center mb-4">
-          <MdRestaurantMenu className="text-[#ff4d3d] text-4xl" />
+    <div className="p-8 flex flex-col items-center w-full">
+      
+      {/* Icon */}
+      <div className="bg-[#fff0ed] h-16 w-16 rounded-full flex items-center justify-center mb-4">
+          <MdRestaurantMenu className="text-[#ff4d3d] text-3xl" />
         </div>
 
         {/* Title */}
-        <h2 className="text-2xl font-black text-gray-800 mb-6">Add Food</h2>
+        <h2 className="text-2xl font-black text-gray-800 mb-6">{initialData ? 'Edit Food' : 'Add Food'}</h2>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-0">
           
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-gray-700">Name</label>
-            <input 
-              type="text" 
-              name="name"
-              placeholder="Enter Food Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-            />
-          </div>
+          <InputField 
+            label="Name"
+            type="text" 
+            name="name"
+            placeholder="Enter Food Name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-gray-700">Food Image</label>
-            <input 
-              type="file" 
-              name="image"
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#ff4d3d1a] file:text-primary hover:file:bg-[#ff4d3d2a] focus:outline-none transition-colors"
-            />
-          </div>
+          <InputField 
+            label="Food Image"
+            type="file" 
+            name="image"
+            onChange={handleChange}
+            required={!initialData}
+          />
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-gray-700">Price</label>
-            <input 
-              type="number" 
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-            />
-          </div>
+          <InputField 
+            label="Price"
+            type="number" 
+            name="price"
+            placeholder="0.00"
+            value={formData.price}
+            onChange={handleChange}
+            required
+            min="0"
+            step="0.01"
+          />
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-gray-700">Select Category</label>
-            <select 
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <SelectField 
+              label="Category"
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-            >
-              <option value="">select Category</option>
-              <option value="main_course">Main Course</option>
-              <option value="appetizer">Appetizer</option>
-              <option value="dessert">Dessert</option>
-              <option value="beverage">Beverage</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-gray-700">Select Food Type</label>
-            <select 
-              name="foodType"
-              value={formData.foodType}
+              required
+              options={[
+                { label: 'Select Category', value: '' },
+                { label: 'Breakfast', value: 'Breakfast' },
+                { label: 'Lunch', value: 'Lunch' },
+                { label: 'Dinner', value: 'Dinner' },
+                { label: 'Snack', value: 'Snack' },
+                { label: 'Dessert', value: 'Dessert' },
+                { label: 'Beverage', value: 'Beverage' },
+                { label: 'Pizza', value: 'Pizza' },
+                { label: 'Burger', value: 'Burger' },
+                { label: 'Pasta', value: 'Pasta' },
+                { label: 'Rice', value: 'Rice' },
+                { label: 'Noodles', value: 'Noodles' }
+              ]}
+            />
+            <SelectField 
+              label="Food Type"
+              name="food_type"
+              value={formData.food_type}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-            >
-              <option value="veg">veg</option>
-              <option value="non-veg">non-veg</option>
-            </select>
+              required
+              options={[
+                { label: 'Veg', value: 'Veg' },
+                { label: 'Non-Veg', value: 'Non-Veg' }
+              ]}
+            />
           </div>
 
-          <button 
-            type="submit" 
-            className="w-full mt-4 bg-[#ff4d3d] hover:bg-[#e64536] text-white font-semibold py-3 rounded-lg shadow-sm transition-colors duration-200"
-          >
-            Save
-          </button>
-        </form>
+          <TextAreaField 
+            label="Description"
+            name="description"
+            placeholder="Enter short description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+            rows={3}
+          />
 
-      </div>
+          <div className="mt-2">
+            <Button fullWidth type="submit" variant="primary" disabled={isLoading}>
+              {isLoading ? 'Saving...' : (initialData ? 'Update' : 'Save')}
+            </Button>
+          </div>
+        </form>
     </div>
   );
 };

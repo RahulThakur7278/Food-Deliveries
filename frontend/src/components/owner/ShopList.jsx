@@ -1,20 +1,37 @@
 import React, { useState } from 'react';
-import { MdAdd, MdStorefront, MdLocationOn, MdPhone, MdEdit, MdDeleteOutline } from 'react-icons/md';
-import Modal from './Modal';
+import { MdAdd, MdStorefront, MdLocationOn, MdEdit, MdDeleteOutline } from 'react-icons/md';
+import Modal from '../ui/Modal';
 import AddShop from './AddShop';
-import ConfirmModal from './ConfirmModal';
-
-const mockShops = [
-  { id: 1, name: "Burger King", address: "123 Main St, New York", phone: "123-456-7890", status: "Active" },
-  { id: 2, name: "Pizza Hut", address: "456 Broadway, New York", phone: "098-765-4321", status: "Active" },
-  { id: 3, name: "Taco Bell", address: "789 5th Ave, New York", phone: "555-123-4567", status: "Inactive" },
-];
+import ConfirmModal from '../ui/ConfirmModal';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getShopsFn, deleteShopFn } from '../../features/shop/api';
+import { useSelector } from 'react-redux';
 
 const ShopList = () => {
+  const user = useSelector((state) => state.auth.user);
+  const queryClient = useQueryClient();
+
   const [isAddShopModalOpen, setIsAddShopModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedShop, setSelectedShop] = useState(null);
+
+  // Fetch Shops
+  const { data: shopsResponse, isLoading, isError } = useQuery({
+    queryKey: ['shops', user?._id],
+    queryFn: () => getShopsFn({ owner: user?._id }),
+    enabled: !!user?._id,
+  });
+
+  const shops = shopsResponse?.data?.shops || [];
+
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteShopFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shops'] });
+    }
+  });
 
   const handleEditClick = (shop) => {
     setSelectedShop(shop);
@@ -25,6 +42,20 @@ const ShopList = () => {
     setSelectedShop(shop);
     setIsDeleteModalOpen(true);
   };
+
+  const confirmDelete = () => {
+    if (selectedShop) {
+      deleteMutation.mutate(selectedShop._id);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center p-10 text-gray-500">Loading shops...</div>;
+  }
+
+  if (isError) {
+    return <div className="flex justify-center p-10 text-red-500">Failed to load shops.</div>;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,10 +71,13 @@ const ShopList = () => {
         <div className="flex items-center gap-4">
           <div className="bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex items-center gap-2">
             <span className="text-gray-500 text-sm font-semibold">Total Shops:</span>
-            <span className="text-primary font-black text-lg">{mockShops.length}</span>
+            <span className="text-primary font-black text-lg">{shops.length}</span>
           </div>
           <button 
-            onClick={() => setIsAddShopModalOpen(true)}
+            onClick={() => {
+              setSelectedShop(null);
+              setIsAddShopModalOpen(true);
+            }}
             className="flex items-center gap-2 bg-[#ff4d3d] hover:bg-[#e64536] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 shadow-sm"
           >
             <MdAdd className="text-lg" />
@@ -53,65 +87,69 @@ const ShopList = () => {
       </div>
 
       {/* Shop List Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-2">
-        {mockShops.map((shop) => (
-          <div key={shop.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3 hover:-translate-y-1 transition-transform duration-300">
-            <div className="flex justify-between items-start">
-              <div className="bg-orange-50 h-12 w-12 rounded-full flex items-center justify-center">
-                <MdStorefront className="text-[#ff4d3d] text-2xl" />
+      {shops.length === 0 ? (
+        <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 text-center text-gray-500">
+          No shops found. Add a shop to get started!
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-2">
+          {shops.map((shop) => (
+            <div key={shop._id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3 hover:-translate-y-1 transition-transform duration-300">
+              <div className="flex justify-between items-start">
+                <div className="bg-orange-50 h-12 w-12 rounded-full overflow-hidden flex items-center justify-center border border-orange-100">
+                  {shop.logo ? (
+                    <img src={shop.logo} alt={shop.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <MdStorefront className="text-[#ff4d3d] text-2xl" />
+                  )}
+                </div>
               </div>
-              <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${shop.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                {shop.status}
-              </span>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-bold text-gray-800">{shop.name}</h3>
-              <div className="flex items-start gap-1.5 mt-2 text-gray-500 text-xs">
-                <MdLocationOn className="text-sm mt-0.5 shrink-0" />
-                <span>{shop.address}</span>
+              
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 line-clamp-1">{shop.name}</h3>
+                <div className="flex items-start gap-1.5 mt-2 text-gray-500 text-xs">
+                  <MdLocationOn className="text-sm mt-0.5 shrink-0" />
+                  <span className="line-clamp-2">{shop.address}, {shop.city}, {shop.state} {shop.zipcode}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 mt-1 text-gray-500 text-xs">
-                <MdPhone className="text-sm shrink-0" />
-                <span>{shop.phone}</span>
-              </div>
-            </div>
 
-            <div className="mt-3 pt-3 border-t border-gray-50 flex justify-end gap-2">
-              <button 
-                onClick={() => handleEditClick(shop)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md text-xs font-semibold transition-colors"
-              >
-                <MdEdit /> Edit
-              </button>
-              <button 
-                onClick={() => handleDeleteClick(shop)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-md text-xs font-semibold transition-colors"
-              >
-                <MdDeleteOutline /> Delete
-              </button>
+              <div className="mt-3 pt-3 border-t border-gray-50 flex justify-end gap-2">
+                <button 
+                  onClick={() => handleEditClick(shop)}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md text-xs font-semibold transition-colors"
+                >
+                  <MdEdit /> Edit
+                </button>
+                <button 
+                  onClick={() => handleDeleteClick(shop)}
+                  disabled={deleteMutation.isPending}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <MdDeleteOutline /> {deleteMutation.isPending && selectedShop?._id === shop._id ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Shop Modal */}
       <Modal isOpen={isAddShopModalOpen} onClose={() => setIsAddShopModalOpen(false)}>
-        <AddShop />
+        <AddShop onClose={() => setIsAddShopModalOpen(false)} />
       </Modal>
 
       {/* Edit Shop Modal */}
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
-        <AddShop /> {/* In a real app, pass selectedShop as prop to populate form */}
+        <AddShop initialData={selectedShop} onClose={() => setIsEditModalOpen(false)} />
       </Modal>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal 
         isOpen={isDeleteModalOpen} 
         onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={() => console.log("Deleted shop:", selectedShop?.name)}
+        onConfirm={confirmDelete}
         title="Delete Shop"
-        message={`Are you sure you want to delete ${selectedShop?.name}? This action cannot be undone.`}
+        message={`Are you sure you want to delete ${selectedShop?.name}? This action cannot be undone and will delete all associated food items.`}
       />
 
     </div>

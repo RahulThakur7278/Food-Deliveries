@@ -45,6 +45,11 @@ export const getAllShops = async (queryParams = {}) => {
     if (search) {
         query.$text = { $search: search };
     }
+    
+    // Add owner filter if provided
+    if (queryParams.owner) {
+        query.owner = queryParams.owner;
+    }
 
     const sortConfig = {};
     // If searching, we often want to sort by text score, but for now we keep the user's sort config unless they specifically want score. 

@@ -253,3 +253,42 @@ export const googleSignIn = async ({ email }) => {
 
     return { user, accessToken, refreshToken };
 };
+
+import jwt from 'jsonwebtoken';
+
+export const refreshTokens = async (refreshToken) => {
+    if (!refreshToken) {
+        throw new Error("No refresh token provided");
+    }
+
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || 'fallback_refresh_secret');
+        
+        const user = await User.findById(decoded._id);
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        const device = user.devices.find(d => d.deviceId === decoded.deviceId);
+        if (!device) {
+            throw new Error("Device not found");
+        }
+
+        if (device.tokenVersion !== decoded.tokenVersion) {
+            throw new Error("Token version mismatch. Please login again.");
+        }
+
+        // Optionally, we could increment tokenVersion here for rolling refresh tokens, 
+        // but for standard implementation, we just return a new access token 
+        // and a new refresh token with the same version.
+        const newAccessToken = generateAccessToken(user, device.deviceId, device.tokenVersion);
+        const newRefreshToken = generateRefreshToken(user, device.deviceId, device.tokenVersion);
+
+        const userToReturn = user.toObject();
+        delete userToReturn.password;
+
+        return { user: userToReturn, accessToken: newAccessToken, refreshToken: newRefreshToken };
+    } catch (error) {
+        throw new Error(error.message || "Invalid refresh token");
+    }
+};
