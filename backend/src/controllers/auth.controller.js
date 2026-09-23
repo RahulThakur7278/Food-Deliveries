@@ -10,13 +10,6 @@ export const register = async (req, res) => {
 
         const { user, accessToken, refreshToken } = await authService.registerUser({ name, email, phone, password, role, deviceId });
 
-        res.cookie('accessToken', accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 15 * 60 * 1000 // 15 minutes
-        });
-
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -49,13 +42,6 @@ export const login = async (req, res) => {
         }
 
         const { user, accessToken, refreshToken } = await authService.loginUser({ email, password, deviceId });
-
-        res.cookie('accessToken', accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 15 * 60 * 1000 // 15 minutes
-        });
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
@@ -91,7 +77,6 @@ export const logout = async (req, res) => {
 
         await authService.logoutUser(userId, deviceId);
 
-        res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
 
         res.status(200).json({
@@ -117,7 +102,6 @@ export const logoutAll = async (req, res) => {
 
         await authService.logoutAllDevices(userId);
 
-        res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
 
         res.status(200).json({
@@ -203,3 +187,109 @@ export const resetPassword = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
+
+export const googleSignUp = async (req, res) => {
+    try {
+        const { email, name, phone, role } = req.body;
+        if (!email || !name) {
+            return res.status(400).json({ success: false, message: "Email and name are required" });
+        }
+
+        const { user, accessToken, refreshToken } = await authService.googleSignUp({ email, name, phone, role });
+
+        // Set cookies
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Google Sign-In successful",
+            data: user,
+            accessToken
+        });
+    } catch (error) {
+        console.error("Error in googleSignUp controller:", error);
+        res.status(500).json({ success: false, message: error.message || "Internal server error" });
+    }
+}
+
+export const getMe = async (req, res) => {
+    try {
+        // req.user is attached by the verifyJWT middleware
+        res.status(200).json({
+            success: true,
+            message: "User details fetched successfully",
+            data: req.user
+        });
+    } catch (error) {
+        console.error("Error in getMe controller:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}
+
+export const googleSignIn = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Email is required" });
+        }
+        
+        const { user, accessToken, refreshToken } = await authService.googleSignIn({ email });
+        
+        // Set cookies
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Google Log-In successful",
+            data: user,
+            accessToken
+        });
+    } catch (error) {
+        if (error.message.includes("does not exist")) {
+            return res.status(404).json({ success: false, message: error.message });
+        }
+        console.error("Error in googleSignIn controller:", error);
+        res.status(500).json({ success: false, message: error.message || "Internal server error" });
+    }
+}
+
+export const refresh = async (req, res) => {
+    try {
+        const incomingRefreshToken = req.cookies?.refreshToken;
+        
+        if (!incomingRefreshToken) {
+            return res.status(401).json({ success: false, message: "Unauthorized request - No refresh token provided" });
+        }
+
+        const { user, accessToken, refreshToken } = await authService.refreshTokens(incomingRefreshToken);
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Tokens refreshed successfully",
+            accessToken,
+            data: user
+        });
+
+    } catch (error) {
+        console.error("Error in refresh controller:", error);
+        res.clearCookie('refreshToken');
+        return res.status(401).json({ success: false, message: error.message || "Invalid refresh token" });
+    }
+};

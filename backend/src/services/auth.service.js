@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import crypto from 'crypto';
 import { generateAccessToken, generateRefreshToken } from "../utils/tokens.js";
 import { transporter } from "../utils/mail.js";
 import Otp from "../models/otp.model.js";
@@ -200,5 +201,94 @@ export const resetPassword = async (identifier, otp, password) => {
     // Delete the OTP document so it cannot be used again for another password reset
     await Otp.deleteOne({ _id: otpEntry._id });
 
-    return { user };
 }
+
+export const googleSignUp = async (userData) => {
+    const { email, name, phone, role = "user" } = userData;
+
+    // Check if user already exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+        // Create new user if they don't exist
+        // Generate a random secure password for Google users since schema requires it
+        const randomPassword = crypto.randomBytes(20).toString('hex');
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+        user = await User.create({
+            name,
+            email,
+            phone: phone || "Not Provided", // Ensure we satisfy the required phone field if not given
+            role,
+            password: hashedPassword,
+            devices: [{ deviceId: "web", tokenVersion: 0 }]
+        });
+    }
+
+    // Generate tokens
+    const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id, user.devices[0].tokenVersion);
+
+    // Remove password from response
+    user = user.toObject();
+    delete user.password;
+
+    return { user, accessToken, refreshToken };
+};
+
+export const googleSignIn = async ({ email }) => {
+    let user = await User.findOne({ email });
+
+    if (!user) {
+        throw new Error("User with this email does not exist. Please sign up first.");
+    }
+
+    // Generate tokens
+    const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id, user.devices[0].tokenVersion);
+
+    user = user.toObject();
+    delete user.password;
+
+    return { user, accessToken, refreshToken };
+};
+
+import jwt from 'jsonwebtoken';
+
+export const refreshTokens = async (refreshToken) => {
+    if (!refreshToken) {
+        throw new Error("No refresh token provided");
+    }
+
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || 'fallback_refresh_secret');
+        
+        const user = await User.findById(decoded._id);
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        const device = user.devices.find(d => d.deviceId === decoded.deviceId);
+        if (!device) {
+            throw new Error("Device not found");
+        }
+
+        if (device.tokenVersion !== decoded.tokenVersion) {
+            throw new Error("Token version mismatch. Please login again.");
+        }
+
+        // Optionally, we could increment tokenVersion here for rolling refresh tokens, 
+        // but for standard implementation, we just return a new access token 
+        // and a new refresh token with the same version.
+        const newAccessToken = generateAccessToken(user, device.deviceId, device.tokenVersion);
+        const newRefreshToken = generateRefreshToken(user, device.deviceId, device.tokenVersion);
+
+        const userToReturn = user.toObject();
+        delete userToReturn.password;
+
+        return { user: userToReturn, accessToken: newAccessToken, refreshToken: newRefreshToken };
+    } catch (error) {
+        throw new Error(error.message || "Invalid refresh token");
+    }
+};
