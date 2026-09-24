@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { MdStorefront } from 'react-icons/md';
+import { MdStorefront, MdClose } from 'react-icons/md';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createShopFn, updateShopFn } from '../../features/shop/api';
 import InputField from '../ui/InputField';
 import TextAreaField from '../ui/TextAreaField';
 import Button from '../ui/Button';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const AddShop = ({ initialData = null, onClose }) => {
   const queryClient = useQueryClient();
@@ -20,6 +21,8 @@ const AddShop = ({ initialData = null, onClose }) => {
     description: '',
   });
 
+  const [imagePreview, setImagePreview] = useState(null);
+
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -32,6 +35,9 @@ const AddShop = ({ initialData = null, onClose }) => {
         country: initialData.country || '',
         description: initialData.description || '',
       });
+      if (initialData.logo) {
+        setImagePreview(getImageUrl(initialData.logo));
+      }
     }
   }, [initialData]);
 
@@ -53,10 +59,12 @@ const AddShop = ({ initialData = null, onClose }) => {
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'file' ? files[0] : value
-    }));
+    if (type === 'file' && files[0]) {
+      setFormData(prev => ({ ...prev, [name]: files[0] }));
+      setImagePreview(URL.createObjectURL(files[0]));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = (e) => {
@@ -101,13 +109,33 @@ const AddShop = ({ initialData = null, onClose }) => {
             required
           />
 
-          <InputField 
-            label="Shop Logo"
-            type="file" 
-            name="logo"
-            onChange={handleChange}
-            required={!initialData}
-          />
+          <div className="flex flex-col mb-4">
+            {imagePreview && (
+              <div className="relative mb-2 h-24 w-24 rounded-lg overflow-hidden border border-gray-200">
+                <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setImagePreview(null);
+                    setFormData(prev => ({ ...prev, logo: null }));
+                    const fileInput = document.getElementById('shop-logo-upload');
+                    if (fileInput) fileInput.value = '';
+                  }}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-md"
+                >
+                  <MdClose size={12} />
+                </button>
+              </div>
+            )}
+            <InputField 
+              id="shop-logo-upload"
+              label="Shop Logo"
+              type="file" 
+              name="logo"
+              onChange={handleChange}
+              required={!initialData && !formData.logo}
+            />
+          </div>
 
           <TextAreaField 
             label="Address"

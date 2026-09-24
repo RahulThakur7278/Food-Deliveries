@@ -3,7 +3,7 @@ import Item from "../models/item.model.js";
 import Shop from "../models/shop.model.js";
 
 export const createItem = async (itemData, userId) => {
-    const { name, description, price, image, category, food_type, shop } = itemData;
+    const { name, description, price, image, images, category, food_type, shop } = itemData;
 
     const shopDetails = await Shop.findById(shop);
     if (!shopDetails) {
@@ -18,6 +18,7 @@ export const createItem = async (itemData, userId) => {
         description,
         price,
         image,
+        images,
         category,
         food_type,
         shop
@@ -42,7 +43,13 @@ export const getItemsByShopId = async (shopId, queryParams = {}) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    const query = { shop: shopId };
+    const query = {};
+    if (shopId.includes(',')) {
+        query.shop = { $in: shopId.split(',') };
+    } else {
+        query.shop = shopId;
+    }
+    
     if (category) query.category = category;
     if (food_type) query.food_type = food_type;
     if (search) query.$text = { $search: search };
@@ -92,7 +99,7 @@ export const updateItem = async (itemId, updateData, userId) => {
     }
 
     // Sanitize payload
-    const allowedUpdates = ['name', 'description', 'price', 'image', 'category', 'food_type'];
+    const allowedUpdates = ['name', 'description', 'price', 'image', 'images', 'category', 'food_type'];
     const sanitizedUpdate = {};
     Object.keys(updateData).forEach(key => {
         if (allowedUpdates.includes(key)) {

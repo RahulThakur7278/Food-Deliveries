@@ -7,8 +7,8 @@ const router = Router();
 
 router.get("/shop/:shopId", getShopItemsController);
 router.get("/:id", getItemByIdController);
-router.post("/", authMiddleware, upload.single("image"), createItemController);
-router.put("/:id", authMiddleware, upload.single("image"), updateItemController);
+router.post("/", authMiddleware, upload.array("images", 5), createItemController);
+router.put("/:id", authMiddleware, upload.array("images", 5), updateItemController);
 router.delete("/:id", authMiddleware, deleteItemController);
 
 export default router;
