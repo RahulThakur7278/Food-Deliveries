@@ -5,17 +5,23 @@ export const createItemController = async (req, res) => {
     try {
         const { name, description, price, category, food_type, shop } = req.body;
 
-        let image = req.body.image;
-        if (req.file) {
-            if (process.env.NODE_ENV === 'production') {
-                const uploadResult = await cloudinaryInstance(req.file.path);
-                image = uploadResult?.secure_url;
-            } else {
-                image = `/uploads/${req.file.filename}`;
+        let images = req.body.images ? (Array.isArray(req.body.images) ? req.body.images : [req.body.images]) : [];
+        if (req.body.image && typeof req.body.image === 'string') {
+            images.push(req.body.image);
+        }
+
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                if (process.env.NODE_ENV === 'production') {
+                    const uploadResult = await cloudinaryInstance(file.path);
+                    if (uploadResult?.secure_url) images.push(uploadResult.secure_url);
+                } else {
+                    images.push(`/uploads/${file.filename}`);
+                }
             }
         }
 
-        const itemData = { name, description, price, image, category, food_type, shop };
+        const itemData = { name, description, price, images, category, food_type, shop };
         const item = await createItem(itemData, req.user._id);
         
         res.status(201).json({ success: true, data: item });
@@ -57,13 +63,26 @@ export const updateItemController = async (req, res) => {
         const itemId = req.params.id;
         let updateData = { ...req.body };
         
-        if (req.file) {
-            if (process.env.NODE_ENV === 'production') {
-                const uploadResult = await cloudinaryInstance(req.file.path);
-                updateData.image = uploadResult?.secure_url;
-            } else {
-                updateData.image = `/uploads/${req.file.filename}`;
+        let newImages = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                if (process.env.NODE_ENV === 'production') {
+                    const uploadResult = await cloudinaryInstance(file.path);
+                    if (uploadResult?.secure_url) newImages.push(uploadResult.secure_url);
+                } else {
+                    newImages.push(`/uploads/${file.filename}`);
+                }
             }
+        }
+        
+        if (newImages.length > 0) {
+            let existingImages = updateData.existingImages ? (Array.isArray(updateData.existingImages) ? updateData.existingImages : [updateData.existingImages]) : [];
+            if (updateData.image && typeof updateData.image === 'string' && existingImages.length === 0) {
+                existingImages.push(updateData.image);
+            }
+            updateData.images = [...existingImages, ...newImages];
+        } else if (updateData.existingImages) {
+            updateData.images = Array.isArray(updateData.existingImages) ? updateData.existingImages : [updateData.existingImages];
         }
 
         const updatedItem = await updateItem(itemId, updateData, req.user._id);

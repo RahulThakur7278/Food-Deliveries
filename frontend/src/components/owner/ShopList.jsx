@@ -6,6 +6,7 @@ import ConfirmModal from '../ui/ConfirmModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getShopsFn, deleteShopFn } from '../../features/shop/api';
 import { useSelector } from 'react-redux';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const ShopList = () => {
   const user = useSelector((state) => state.auth.user);
@@ -98,7 +99,7 @@ const ShopList = () => {
               <div className="flex justify-between items-start">
                 <div className="bg-orange-50 h-12 w-12 rounded-full overflow-hidden flex items-center justify-center border border-orange-100">
                   {shop.logo ? (
-                    <img src={shop.logo} alt={shop.name} className="h-full w-full object-cover" />
+                    <img src={getImageUrl(shop.logo)} alt={shop.name} className="h-full w-full object-cover" />
                   ) : (
                     <MdStorefront className="text-[#ff4d3d] text-2xl" />
                   )}
