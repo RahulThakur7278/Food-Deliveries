@@ -1,4 +1,4 @@
-import { createItem, getItemsByShopId, getItemById, updateItem, deleteItem } from "../services/item.service.js";
+import { createItem, getItemsByShopId, getItemById, updateItem, deleteItem, getItemsByCity } from "../services/item.service.js";
 import cloudinaryInstance from "../utils/cloudinary.js";
 
 export const createItemController = async (req, res) => {
@@ -111,5 +111,15 @@ export const deleteItemController = async (req, res) => {
             return res.status(403).json({ success: false, message: error.message });
         }
         res.status(500).json({ success: false, message: "Failed to delete item", error: error.message });
+    }
+};
+
+export const getItemsByCityController = async (req, res) => {
+    try {
+        const { city } = req.params;
+        const itemsData = await getItemsByCity(city, req.query);
+        res.status(200).json({ success: true, data: itemsData });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Failed to fetch items by city", error: error.message });
     }
 };
