@@ -39,3 +39,7 @@ export const googleSignInFn = async (data) => {
 export const refreshFn = async () => {
   return await axiosClient.post('/auth/refresh');
 };
+
+export const getMeFn = async () => {
+  return await axiosClient.get('/auth/get-me');
+};
