@@ -6,19 +6,66 @@ import ForgotPassword from './pages/ForgotPassword';
 import UserDashboard from './pages/user/UserDashboard';
 import OwnerDashboard from './pages/owner/OwnerDashboard';
 import DeliveryDashboard from './pages/delivery/DeliveryDashboard';
+import AuthInitializer from './components/AuthInitializer';
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicOnlyRoute from './components/PublicOnlyRoute';
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<SignUp />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/user-dashboard" element={<UserDashboard />} />
-        <Route path="/owner-dashboard" element={<OwnerDashboard />} />
-        <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
-      </Routes>
+      <AuthInitializer>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route 
+            path="/login" 
+            element={
+              <PublicOnlyRoute>
+                <Login />
+              </PublicOnlyRoute>
+            } 
+          />
+          <Route 
+            path="/register" 
+            element={
+              <PublicOnlyRoute>
+                <SignUp />
+              </PublicOnlyRoute>
+            } 
+          />
+          <Route 
+            path="/forgot-password" 
+            element={
+              <PublicOnlyRoute>
+                <ForgotPassword />
+              </PublicOnlyRoute>
+            } 
+          />
+          <Route 
+            path="/user-dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <UserDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/owner-dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['owner']}>
+                <OwnerDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/delivery-dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['deliveryBoy']}>
+                <DeliveryDashboard />
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
+      </AuthInitializer>
     </Router>
   );
 }
