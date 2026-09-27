@@ -1,4 +1,4 @@
-import { createShop, getAllShops, getShopById, updateShop, deleteShop } from "../services/shop.service.js";
+import { createShop, getAllShops, getShopById, updateShop, deleteShop, getShopByCity } from "../services/shop.service.js";
 import cloudinaryInstance from "../utils/cloudinary.js";
 
 export const createShopController = async (req, res) => {
@@ -18,7 +18,7 @@ export const createShopController = async (req, res) => {
 
         const shopData = { name, description, address, city, state, zipcode, country, items, logo, owner };
         const shop = await createShop(shopData);
-        
+
         res.status(201).json({ success: true, data: shop });
     } catch (error) {
         res.status(500).json({ success: false, message: "Failed to create shop", error: error.message });
@@ -50,7 +50,7 @@ export const updateShopController = async (req, res) => {
     try {
         const shopId = req.params.id;
         let updateData = { ...req.body };
-        
+
         if (req.file) {
             if (process.env.NODE_ENV === 'production') {
                 const uploadResult = await cloudinaryInstance(req.file.path);
@@ -86,5 +86,14 @@ export const deleteShopController = async (req, res) => {
             return res.status(403).json({ success: false, message: error.message });
         }
         res.status(500).json({ success: false, message: "Failed to delete shop", error: error.message });
+    }
+};
+
+export const getShopByCityController = async (req, res) => {
+    try {
+        const shopsData = await getShopByCity(req.params.city, req.query);
+        res.status(200).json({ success: true, data: shopsData });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Failed to fetch shops", error: error.message });
     }
 };

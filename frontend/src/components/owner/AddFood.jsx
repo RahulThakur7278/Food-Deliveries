@@ -1,34 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { MdRestaurantMenu } from 'react-icons/md';
+import { MdRestaurantMenu, MdClose } from 'react-icons/md';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createItemFn, updateItemFn } from '../../features/item/api';
 import InputField from '../ui/InputField';
 import SelectField from '../ui/SelectField';
 import TextAreaField from '../ui/TextAreaField';
 import Button from '../ui/Button';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const AddFood = ({ initialData = null, shopId, onClose }) => {
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
     name: '',
-    image: null,
+    images: [],
+    existingImages: [],
     price: '',
     category: '',
     food_type: 'Veg',
     description: '',
   });
 
+  const [imagePreviews, setImagePreviews] = useState([]);
+
   useEffect(() => {
     if (initialData) {
+      const existing = initialData.images?.length > 0 ? initialData.images : (initialData.image ? [initialData.image] : []);
       setFormData({
         name: initialData.name || '',
-        image: null,
+        images: [],
+        existingImages: existing,
         price: initialData.price || '',
         category: initialData.category || '',
         food_type: initialData.food_type || 'Veg',
         description: initialData.description || '',
       });
+      setImagePreviews(existing.map(img => getImageUrl(img)));
     }
   }, [initialData]);
 
@@ -50,17 +57,44 @@ const AddFood = ({ initialData = null, shopId, onClose }) => {
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'file' ? files[0] : value
-    }));
+    if (type === 'file' && files.length > 0) {
+      const newFiles = Array.from(files);
+      setFormData(prev => ({ ...prev, images: [...prev.images, ...newFiles] }));
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setImagePreviews(prev => [...prev, ...newPreviews]);
+    } else if (type !== 'file') {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const removeImage = (index) => {
+    const totalExisting = formData.existingImages.length;
+    if (index < totalExisting) {
+        setFormData(prev => ({
+            ...prev,
+            existingImages: prev.existingImages.filter((_, i) => i !== index)
+        }));
+    } else {
+        const newFileIndex = index - totalExisting;
+        setFormData(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== newFileIndex)
+        }));
+    }
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    const fileInput = document.getElementById('food-images-upload');
+    if (fileInput) fileInput.value = '';
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const data = new FormData();
     Object.keys(formData).forEach(key => {
-      if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
+      if (key === 'images') {
+        formData.images.forEach(file => data.append('images', file));
+      } else if (key === 'existingImages') {
+        formData.existingImages.forEach(img => data.append('existingImages', img));
+      } else if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
         data.append(key, formData[key]);
       }
     });
@@ -101,13 +135,33 @@ const AddFood = ({ initialData = null, shopId, onClose }) => {
             required
           />
 
-          <InputField 
-            label="Food Image"
-            type="file" 
-            name="image"
-            onChange={handleChange}
-            required={!initialData}
-          />
+          <div className="flex flex-col mb-4">
+            {imagePreviews.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="relative h-20 w-20 rounded-lg overflow-hidden border border-gray-200">
+                    <img src={preview} alt="Preview" className="h-full w-full object-cover" />
+                    <button 
+                      type="button" 
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-md"
+                    >
+                      <MdClose size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <InputField 
+              id="food-images-upload"
+              label="Food Images"
+              type="file" 
+              name="images"
+              multiple
+              onChange={handleChange}
+              required={!initialData && imagePreviews.length === 0}
+            />
+          </div>
 
           <InputField 
             label="Price"

@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getItemsByShopFn, deleteItemFn } from '../../features/item/api';
 import { getShopsFn } from '../../features/shop/api';
 import { useSelector } from 'react-redux';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const FoodList = () => {
   const user = useSelector((state) => state.auth.user);
@@ -16,7 +17,7 @@ const FoodList = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
-  const [selectedShopId, setSelectedShopId] = useState('');
+  const [selectedShopId, setSelectedShopId] = useState('all');
 
   // Fetch Shops to populate the selector
   const { data: shopsResponse } = useQuery({
@@ -34,11 +35,15 @@ const FoodList = () => {
     }
   }, [shops, selectedShopId]);
 
-  // Fetch Food Items for the selected shop
+  // Prepare all shop ids
+  const allShopIds = shops.map(shop => shop._id).join(',');
+  const queryShopId = selectedShopId === 'all' ? allShopIds : selectedShopId;
+
+  // Fetch Food Items for the selected shop(s)
   const { data: itemsResponse, isLoading: isLoadingItems, isError: isErrorItems } = useQuery({
-    queryKey: ['items', selectedShopId],
-    queryFn: () => getItemsByShopFn(selectedShopId),
-    enabled: !!selectedShopId,
+    queryKey: ['items', queryShopId],
+    queryFn: () => getItemsByShopFn(queryShopId),
+    enabled: !!queryShopId,
   });
 
   const foods = itemsResponse?.data?.items || [];
@@ -54,7 +59,7 @@ const FoodList = () => {
   const deleteMutation = useMutation({
     mutationFn: deleteItemFn,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['items', selectedShopId] });
+      queryClient.invalidateQueries({ queryKey: ['items', queryShopId] });
     }
   });
 
@@ -92,6 +97,7 @@ const FoodList = () => {
                 onChange={(e) => setSelectedShopId(e.target.value)}
                 className="px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary"
               >
+                <option value="all">All Shops</option>
                 {shops.map(shop => (
                   <option key={shop._id} value={shop._id}>{shop.name}</option>
                 ))}
@@ -113,7 +119,8 @@ const FoodList = () => {
               setSelectedFood(null);
               setIsAddFoodModalOpen(true);
             }}
-            disabled={!selectedShopId}
+            disabled={!selectedShopId || selectedShopId === 'all'}
+            title={selectedShopId === 'all' ? 'Please select a specific shop to add food' : ''}
             className="flex items-center gap-2 bg-[#ff4d3d] hover:bg-[#e64536] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 shadow-sm h-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MdAdd className="text-lg" />
@@ -141,8 +148,8 @@ const FoodList = () => {
             <div key={food._id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3 hover:-translate-y-1 transition-transform duration-300">
               <div className="flex justify-between items-start">
                 <div className="bg-red-50 h-12 w-12 rounded-full overflow-hidden flex items-center justify-center border border-red-100">
-                  {food.image ? (
-                    <img src={food.image} alt={food.name} className="h-full w-full object-cover" />
+                  {(food.images?.length > 0 || food.image) ? (
+                    <img src={getImageUrl(food.images?.[0] || food.image)} alt={food.name} className="h-full w-full object-cover" />
                   ) : (
                     <MdRestaurantMenu className="text-[#ff4d3d] text-2xl" />
                   )}
@@ -193,7 +200,7 @@ const FoodList = () => {
 
       {/* Edit Food Modal */}
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
-        <AddFood initialData={selectedFood} shopId={selectedShopId} onClose={() => setIsEditModalOpen(false)} />
+        <AddFood initialData={selectedFood} shopId={selectedFood?.shop || selectedShopId} onClose={() => setIsEditModalOpen(false)} />
       </Modal>
 
       {/* Delete Confirmation Modal */}

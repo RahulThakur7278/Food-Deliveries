@@ -47,7 +47,7 @@ export const getDashboardStats = async (req, res) => {
         const totalShops = shopIds.length;
 
         // 2. Get total items
-        const totalItems = await Item.countDocuments({ shopId: { $in: shopIds } });
+        const totalItems = await Item.countDocuments({ shop: { $in: shopIds } });
 
         // Auto-seed dummy orders for demonstration if none exist
         await seedDummyOrders(shopIds, ownerId);

@@ -3,7 +3,7 @@ import Item from "../models/item.model.js";
 import Shop from "../models/shop.model.js";
 
 export const createItem = async (itemData, userId) => {
-    const { name, description, price, image, category, food_type, shop } = itemData;
+    const { name, description, price, image, images, category, food_type, shop } = itemData;
 
     const shopDetails = await Shop.findById(shop);
     if (!shopDetails) {
@@ -18,6 +18,7 @@ export const createItem = async (itemData, userId) => {
         description,
         price,
         image,
+        images,
         category,
         food_type,
         shop
@@ -42,7 +43,13 @@ export const getItemsByShopId = async (shopId, queryParams = {}) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    const query = { shop: shopId };
+    const query = {};
+    if (shopId.includes(',')) {
+        query.shop = { $in: shopId.split(',') };
+    } else {
+        query.shop = shopId;
+    }
+    
     if (category) query.category = category;
     if (food_type) query.food_type = food_type;
     if (search) query.$text = { $search: search };
@@ -92,7 +99,7 @@ export const updateItem = async (itemId, updateData, userId) => {
     }
 
     // Sanitize payload
-    const allowedUpdates = ['name', 'description', 'price', 'image', 'category', 'food_type'];
+    const allowedUpdates = ['name', 'description', 'price', 'image', 'images', 'category', 'food_type'];
     const sanitizedUpdate = {};
     Object.keys(updateData).forEach(key => {
         if (allowedUpdates.includes(key)) {
@@ -130,4 +137,57 @@ export const deleteItem = async (itemId, userId) => {
     await shopDetails.save();
     
     return true;
+};
+
+export const getItemsByCity = async (city, queryParams = {}) => {
+    const { 
+        page = 1, 
+        limit = 20, 
+        sortBy = 'createdAt', 
+        order = 'desc',
+        category,
+        food_type,
+        zipcode,
+        search = ''
+    } = queryParams;
+
+    let shopQuery = {};
+    if (city && city.toLowerCase() !== 'all') {
+        shopQuery.city = { $regex: new RegExp(`^${city.trim()}$`, 'i') };
+    }
+
+    if (zipcode) {
+        shopQuery.zipcode = { $regex: new RegExp(`^${zipcode.trim()}$`, 'i') };
+    }
+
+    const shops = await Shop.find(shopQuery).select('_id');
+    const shopIds = shops.map(s => s._id);
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const query = { shop: { $in: shopIds } };
+    if (category) query.category = category;
+    if (food_type) query.food_type = food_type;
+    if (search) query.$text = { $search: search };
+
+    const sortConfig = {};
+    sortConfig[sortBy] = order === 'asc' ? 1 : -1;
+
+    const items = await Item.find(query)
+        .sort(sortConfig)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('shop', 'name city address logo')
+        .lean();
+
+    const total = await Item.countDocuments(query);
+
+    return {
+        items,
+        pagination: {
+            total,
+            page: parseInt(page),
+            pages: Math.ceil(total / parseInt(limit))
+        }
+    };
 };

@@ -18,8 +18,11 @@ const itemSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        required: true,
+        required: false,
     },
+    images: [{
+        type: String
+    }],
     category: {
         type: String,
         required: true,
