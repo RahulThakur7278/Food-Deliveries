@@ -12,8 +12,8 @@ const axiosClient = axios.create({
 // Request Interceptor
 axiosClient.interceptors.request.use(
   (config) => {
-    // Attach token from Redux state
-    const token = store.getState().auth.token;
+    // Attach token from Redux state or localStorage
+    const token = store.getState().auth?.token || localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -46,7 +46,12 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Do not attempt refresh on auth endpoints (login, register, refresh, etc.)
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') || 
+                           originalRequest?.url?.includes('/auth/register') || 
+                           originalRequest?.url?.includes('/auth/refresh');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise(function(resolve, reject) {
           failedQueue.push({ resolve, reject });
