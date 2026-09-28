@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { MdLocationOn, MdLogout, MdPhonelinkErase } from 'react-icons/md';
+import { MdLocationOn, MdLogout, MdPhonelinkErase, MdMap } from 'react-icons/md';
 import { FiSearch, FiShoppingCart } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useLogoutMutation, useLogoutAllMutation } from '../features/auth/queries';
+import { getUserCurrentLocation, openInGoogleMaps } from '../utils/location';
 
 const Navbar = () => {
   const user = useSelector((state) => state.auth.user);
@@ -11,6 +12,57 @@ const Navbar = () => {
   const logoutMutation = useLogoutMutation();
   const logoutAllMutation = useLogoutAllMutation();
   const [showDropdown, setShowDropdown] = useState(false);
+  const storedCity = localStorage.getItem('userCity') || '';
+  const storedLoc = localStorage.getItem('userLocation') ? JSON.parse(localStorage.getItem('userLocation')) : null;
+
+  const [currentLocation, setCurrentLocation] = useState({
+    city: storedCity || 'Detecting...',
+    latitude: storedLoc?.latitude || null,
+    longitude: storedLoc?.longitude || null,
+    isLoading: !storedCity,
+    googleMapsUrl: storedLoc?.googleMapsUrl || '',
+  });
+
+  const handleDetectLocation = async (isManual = false) => {
+    try {
+      setCurrentLocation(prev => ({ ...prev, isLoading: true }));
+      const loc = await getUserCurrentLocation();
+      const updatedState = {
+        city: loc.city,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        isLoading: false,
+        googleMapsUrl: loc.googleMapsUrl,
+      };
+      setCurrentLocation(updatedState);
+      localStorage.setItem('userCity', loc.city);
+      localStorage.setItem('userLocation', JSON.stringify(updatedState));
+    } catch (error) {
+      console.error('Location error:', error);
+      if (isManual) {
+        alert(error.message || 'Could not fetch location');
+      }
+      setCurrentLocation(prev => ({
+        ...prev,
+        isLoading: false,
+        city: prev.city === 'Detecting...' ? 'Select Location' : prev.city
+      }));
+    }
+  };
+
+  React.useEffect(() => {
+    // Auto-detect current location on component mount
+    handleDetectLocation(false);
+  }, []);
+
+  const handleOpenMap = (e) => {
+    e.stopPropagation();
+    if (currentLocation.latitude && currentLocation.longitude) {
+      openInGoogleMaps(currentLocation.latitude, currentLocation.longitude);
+    } else {
+      handleDetectLocation();
+    }
+  };
 
   const handleLogout = () => {
     if (user?._id) {
@@ -44,9 +96,25 @@ const Navbar = () => {
         <div className="flex items-center bg-white border border-gray-200 rounded-lg px-4 py-2.5 shadow-sm hover:shadow-md transition-shadow duration-300">
 
           {/* Location Area */}
-          <div className="flex items-center gap-2 cursor-pointer group">
+          <div
+            className="flex items-center gap-2 cursor-pointer group"
+            onClick={() => handleDetectLocation(true)}
+            title="Click to detect current location"
+          >
             <MdLocationOn className="text-primary text-xl" />
-            <span className="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors">jhansi</span>
+            <span className="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors capitalize">
+              {currentLocation.isLoading ? 'Locating...' : currentLocation.city}
+            </span>
+            {currentLocation.latitude && currentLocation.longitude && (
+              <button
+                type="button"
+                onClick={handleOpenMap}
+                className="text-xs bg-red-50 hover:bg-red-100 text-primary px-2 py-0.5 rounded font-semibold transition-colors flex items-center gap-1 ml-1"
+                title="Open current location on Google Maps"
+              >
+                <MdMap className="text-sm" /> Map
+              </button>
+            )}
           </div>
 
           {/* Vertical Divider */}
@@ -97,7 +165,7 @@ const Navbar = () => {
               <p className="text-sm font-bold text-gray-800">{user?.name || 'User'}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
-            <button 
+            <button
               onClick={handleLogout}
               disabled={logoutMutation.isPending}
               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors duration-150"
@@ -105,7 +173,7 @@ const Navbar = () => {
               <MdLogout className="text-gray-500" />
               {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
             </button>
-            <button 
+            <button
               onClick={handleLogoutAll}
               disabled={logoutAllMutation.isPending}
               className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors duration-150"
