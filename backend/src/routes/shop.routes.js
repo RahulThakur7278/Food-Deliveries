@@ -6,6 +6,7 @@ import upload from "../utils/upload.js";
 const router = Router();
 
 router.get("/city/:city", getShopByCityController);
+router.get("/", getAllShopsController);
 router.get("/:id", getShopByIdController);
 router.post("/", authMiddleware, upload.single("logo"), createShopController);
 router.put("/:id", authMiddleware, upload.single("logo"), updateShopController);
