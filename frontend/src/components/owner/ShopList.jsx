@@ -3,14 +3,14 @@ import { MdAdd, MdStorefront, MdLocationOn, MdEdit, MdDeleteOutline } from 'reac
 import Modal from '../ui/Modal';
 import AddShop from './AddShop';
 import ConfirmModal from '../ui/ConfirmModal';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getShopsFn, deleteShopFn } from '../../features/shop/api';
-import { useSelector } from 'react-redux';
+import { useGetShopsQuery, useDeleteShopMutation } from '../../features/shop/queries';
+import { useSelector, useDispatch } from 'react-redux';
+import { setSelectedShopId } from '../../features/shop/shopSlice';
 import { getImageUrl } from '../../utils/imageUrl';
 
 const ShopList = () => {
   const user = useSelector((state) => state.auth.user);
-  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
 
   const [isAddShopModalOpen, setIsAddShopModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -18,21 +18,12 @@ const ShopList = () => {
   const [selectedShop, setSelectedShop] = useState(null);
 
   // Fetch Shops
-  const { data: shopsResponse, isLoading, isError } = useQuery({
-    queryKey: ['shops', user?._id],
-    queryFn: () => getShopsFn({ owner: user?._id }),
-    enabled: !!user?._id,
-  });
+  const { data: shopsResponse, isLoading, isError } = useGetShopsQuery({ owner: user?._id }, { enabled: !!user?._id });
 
   const shops = shopsResponse?.data?.shops || [];
 
   // Delete Mutation
-  const deleteMutation = useMutation({
-    mutationFn: deleteShopFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shops'] });
-    }
-  });
+  const deleteMutation = useDeleteShopMutation();
 
   const handleEditClick = (shop) => {
     setSelectedShop(shop);

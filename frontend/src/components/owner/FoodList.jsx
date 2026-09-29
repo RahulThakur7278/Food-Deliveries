@@ -5,7 +5,7 @@ import AddFood from './AddFood';
 import ConfirmModal from '../ui/ConfirmModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getItemsByShopFn, deleteItemFn } from '../../features/item/api';
-import { getShopsFn } from '../../features/shop/api';
+import { useGetShopsQuery } from '../../features/shop/queries';
 import { useSelector } from 'react-redux';
 import { getImageUrl } from '../../utils/imageUrl';
 
@@ -20,11 +20,7 @@ const FoodList = () => {
   const [selectedShopId, setSelectedShopId] = useState('all');
 
   // Fetch Shops to populate the selector
-  const { data: shopsResponse } = useQuery({
-    queryKey: ['shops', user?._id],
-    queryFn: () => getShopsFn({ owner: user?._id }),
-    enabled: !!user?._id,
-  });
+  const { data: shopsResponse } = useGetShopsQuery({ owner: user?._id }, { enabled: !!user?._id });
 
   const shops = shopsResponse?.data?.shops || [];
 
