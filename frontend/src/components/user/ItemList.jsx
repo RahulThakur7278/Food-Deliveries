@@ -1,20 +1,36 @@
 import React, { useRef, useState, useEffect } from 'react';
 import FoodCard from './FoodCard';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-
-const items = [
-  { id: 1, name: 'Corn Pizza', price: 199, reviews: 0, isVeg: true, image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=500&q=80' },
-  { id: 2, name: 'chicken Burger', price: 99, reviews: 0, isVeg: false, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80' },
-  { id: 3, name: 'burger', price: 99, reviews: 0, isVeg: true, image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&q=80' },
-  { id: 4, name: 'Samosa 2 pieces', price: 49, reviews: 0, isVeg: true, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&q=80' },
-  { id: 5, name: 'Paneer Tikka', price: 149, reviews: 12, isVeg: true, image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&q=80' },
-];
+import axiosClient from '../../api/axiosClient';
+import { useUserLocation } from '../../hooks/useUserLocation';
 
 const ItemList = () => {
   const scrollRef = useRef(null);
   const [isScrollable, setIsScrollable] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const { city } = useUserLocation(false);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      if (!city || city === 'Detecting...' || city === 'Select Location' || city === 'Unknown City') return;
+      
+      try {
+        setLoading(true);
+        const res = await axiosClient.get(`/items/city/${city}`);
+        setItems(res.data?.items || []);
+      } catch (error) {
+        console.error('Error fetching items:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, [city]);
 
   const checkScroll = () => {
     if (scrollRef.current) {
@@ -45,7 +61,7 @@ const ItemList = () => {
       window.removeEventListener('resize', checkScroll);
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, []);
+  }, [items]); // Re-check scroll when items are loaded
 
   const scroll = (direction) => {
     if (scrollRef.current) {
@@ -63,9 +79,17 @@ const ItemList = () => {
     }
   };
 
+  if (loading) {
+    return <div className="mb-10 animate-pulse h-48 bg-gray-100 rounded-lg"></div>;
+  }
+
+  if (items.length === 0) {
+    return null; // or empty state
+  }
+
   return (
     <div className="mb-10">
-      <h2 className="text-xl font-medium text-gray-700 mb-4">Suggested items</h2>
+      <h2 className="text-xl font-medium text-gray-700 mb-4">Suggested items in {city !== 'Detecting...' && city !== 'Select Location' ? city : 'your area'}</h2>
       <div className="relative">
         {isScrollable && (
           <button
@@ -82,7 +106,7 @@ const ItemList = () => {
 
         <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth">
           {items.map((item) => (
-            <FoodCard key={item.id} item={item} />
+            <FoodCard key={item._id || item.id} item={item} />
           ))}
         </div>
 

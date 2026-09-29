@@ -1,21 +1,24 @@
 import React from 'react';
 import { FiShoppingCart } from 'react-icons/fi';
 import { MdStar } from 'react-icons/md';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const FoodCard = ({ item }) => {
+  const isVeg = item.isVeg ?? (item.food_type === 'Veg');
+  
   return (
     <div className="min-w-[200px] w-[200px] bg-white rounded-xl border border-red-200 overflow-hidden hover:border-primary transition-all shadow-sm hover:shadow-md group flex-shrink-0 flex flex-col">
       {/* Image Container */}
       <div className="h-[130px] w-full relative overflow-hidden">
         <img 
-          src={item.image} 
+          src={item.images?.[0] || item.image ? getImageUrl(item.images?.[0] || item.image) : 'https://via.placeholder.com/200'} 
           alt={item.name} 
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
         {/* Veg/Non-veg mark */}
         <div className="absolute top-2 right-2 bg-white rounded-sm p-[2px] shadow-sm">
-          <div className={`w-3 h-3 border flex items-center justify-center rounded-sm ${item.isVeg ? 'border-green-600' : 'border-red-600'}`}>
-             <div className={`w-1.5 h-1.5 rounded-full ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`}></div>
+          <div className={`w-3 h-3 border flex items-center justify-center rounded-sm ${isVeg ? 'border-green-600' : 'border-red-600'}`}>
+             <div className={`w-1.5 h-1.5 rounded-full ${isVeg ? 'bg-green-600' : 'bg-red-600'}`}></div>
           </div>
         </div>
       </div>
@@ -29,7 +32,7 @@ const FoodCard = ({ item }) => {
           <div className="flex text-[#ffc107] text-[12px]">
             <MdStar /><MdStar /><MdStar /><MdStar /><MdStar className="text-gray-300" />
           </div>
-          <span className="text-[10px] text-gray-500">({item.reviews})</span>
+          <span className="text-[10px] text-gray-500">({item.reviews || 0})</span>
         </div>
         
         <div className="mt-4 flex items-center justify-between">
