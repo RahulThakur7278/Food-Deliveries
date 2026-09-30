@@ -2,18 +2,17 @@ import React, { useRef, useState, useEffect } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const categories = [
-  { id: 1, name: 'Snacks', image: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=300&q=80' },
-  { id: 2, name: 'Main Course', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&q=80' },
-  { id: 3, name: 'Desserts', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&q=80' },
-  { id: 4, name: 'Pizza', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&q=80' },
-  { id: 5, name: 'Burgers', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&q=80' },
-  { id: 6, name: 'Sandwiches', image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=300&q=80' },
-  { id: 7, name: 'Snacks', image: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=300&q=80' },
-  { id: 8, name: 'Main Course', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&q=80' },
-  { id: 9, name: 'Desserts', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&q=80' },
-  { id: 10, name: 'Pizza', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&q=80' },
-  { id: 11, name: 'Burgers', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&q=80' },
-  { id: 12, name: 'Sandwiches', image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=300&q=80' },
+  { id: 'Breakfast', name: 'Breakfast', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=300&q=80' },
+  { id: 'Lunch', name: 'Lunch', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&q=80' },
+  { id: 'Dinner', name: 'Dinner', image: 'https://images.unsplash.com/photo-1544025162-83b6f2874136?w=300&q=80' },
+  { id: 'Snack', name: 'Snack', image: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=300&q=80' },
+  { id: 'Dessert', name: 'Dessert', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&q=80' },
+  { id: 'Beverage', name: 'Beverage', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&q=80' },
+  { id: 'Pizza', name: 'Pizza', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&q=80' },
+  { id: 'Burger', name: 'Burger', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&q=80' },
+  { id: 'Pasta', name: 'Pasta', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=300&q=80' },
+  { id: 'Rice', name: 'Rice', image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=300&q=80' },
+  { id: 'Noodles', name: 'Noodles', image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=300&q=80' },
 ];
 
 const CategoryList = () => {
