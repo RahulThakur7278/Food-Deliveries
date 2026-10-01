@@ -4,6 +4,10 @@ export const getItemsByShopFn = async (shopId, params = {}) => {
   return await axiosClient.get(`/items/shop/${shopId}`, { params });
 };
 
+export const getCategoriesFn = async () => {
+  return await axiosClient.get('/items/categories');
+};
+
 export const getItemByIdFn = async (itemId) => {
   return await axiosClient.get(`/items/${itemId}`);
 };

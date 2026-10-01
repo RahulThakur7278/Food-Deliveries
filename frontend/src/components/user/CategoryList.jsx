@@ -1,25 +1,30 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
-const categories = [
-  { id: 'Breakfast', name: 'Breakfast', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=300&q=80' },
-  { id: 'Lunch', name: 'Lunch', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&q=80' },
-  { id: 'Dinner', name: 'Dinner', image: 'https://images.unsplash.com/photo-1544025162-83b6f2874136?w=300&q=80' },
-  { id: 'Snack', name: 'Snack', image: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=300&q=80' },
-  { id: 'Dessert', name: 'Dessert', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&q=80' },
-  { id: 'Beverage', name: 'Beverage', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&q=80' },
-  { id: 'Pizza', name: 'Pizza', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&q=80' },
-  { id: 'Burger', name: 'Burger', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&q=80' },
-  { id: 'Pasta', name: 'Pasta', image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=300&q=80' },
-  { id: 'Rice', name: 'Rice', image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=300&q=80' },
-  { id: 'Noodles', name: 'Noodles', image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=300&q=80' },
-];
+import { useGetCategoriesQuery } from '../../features/item/queries';
+
+const categoryImageMap = {
+  'Breakfast': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=300&q=80',
+  'Lunch': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&q=80',
+  'Dinner': 'https://images.unsplash.com/photo-1544025162-83b6f2874136?w=300&q=80',
+  'Snack': 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=300&q=80',
+  'Dessert': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&q=80',
+  'Beverage': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&q=80',
+  'Pizza': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&q=80',
+  'Burger': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&q=80',
+  'Pasta': 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=300&q=80',
+  'Rice': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=300&q=80',
+  'Noodles': 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=300&q=80',
+};
 
 const CategoryList = () => {
   const scrollRef = useRef(null);
   const [isScrollable, setIsScrollable] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const { data: categoriesResponse, isLoading } = useGetCategoriesQuery();
+  const categories = categoriesResponse?.data || Object.keys(categoryImageMap);
 
   const checkScroll = () => {
     if (scrollRef.current) {
@@ -85,20 +90,34 @@ const CategoryList = () => {
           </button>
         )}
 
-        <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth">
-          {categories.map((category) => (
-            <div key={category.id} className="min-w-[120px] w-[120px] cursor-pointer group flex-shrink-0">
-              <div className="h-[130px] rounded-2xl overflow-hidden border border-red-200 group-hover:border-primary transition-all duration-300 flex flex-col bg-gray-50 shadow-sm">
-                <div className="h-[100px] w-full overflow-hidden">
-                  <img src={category.image} alt={category.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
-                <div className="h-[30px] w-full flex items-center justify-center bg-gray-200/40">
-                  <span className="text-[12px] font-medium text-gray-700 group-hover:text-primary transition-colors">{category.name}</span>
+        {isLoading && (
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="min-w-[120px] w-[120px] h-[130px] rounded-2xl bg-gray-200 animate-pulse shrink-0"></div>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && (
+          <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth">
+            {categories.map((category) => (
+              <div key={category} className="min-w-[120px] w-[120px] cursor-pointer group flex-shrink-0">
+                <div className="h-[130px] rounded-2xl overflow-hidden border border-red-200 group-hover:border-primary transition-all duration-300 flex flex-col bg-gray-50 shadow-sm">
+                  <div className="h-[100px] w-full overflow-hidden">
+                    <img 
+                      src={categoryImageMap[category] || 'https://images.unsplash.com/photo-1495195134817-a165d42e2736?w=300&q=80'} 
+                      alt={category} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                    />
+                  </div>
+                  <div className="h-[30px] w-full flex items-center justify-center bg-gray-200/40">
+                    <span className="text-[12px] font-medium text-gray-700 group-hover:text-primary transition-colors">{category}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {isScrollable && (
           <button
