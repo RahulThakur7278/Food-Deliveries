@@ -191,3 +191,7 @@ export const getItemsByCity = async (city, queryParams = {}) => {
         }
     };
 };
+
+export const getCategories = () => {
+    return Item.schema.path('category').enumValues;
+};

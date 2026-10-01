@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { createItemController, getShopItemsController, getItemByIdController, updateItemController, deleteItemController, getItemsByCityController } from "../controllers/item.controller.js";
+import { createItemController, getShopItemsController, getItemByIdController, updateItemController, deleteItemController, getItemsByCityController, getCategoriesController } from "../controllers/item.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import upload from "../utils/upload.js";
 
 const router = Router();
 
+router.get("/categories", getCategoriesController);
 router.get("/city/:city", getItemsByCityController);
 router.get("/shop/:shopId", getShopItemsController);
 router.get("/:id", getItemByIdController);
