@@ -1,11 +1,32 @@
 import React from 'react';
 import { FiShoppingCart } from 'react-icons/fi';
 import { MdStar } from 'react-icons/md';
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCart, removeFromCart, selectCartItems } from '../../features/cart/cartSlice';
 import { getImageUrl } from '../../utils/imageUrl';
 
 const FoodCard = ({ item }) => {
+  const dispatch = useDispatch();
+  const cartItems = useSelector(selectCartItems);
+
+  const itemId = item._id || item.id;
+  const cartItem = cartItems.find((i) => (i._id || i.id) === itemId);
+  const quantity = cartItem ? cartItem.quantity : 0;
+
   const isVeg = item.isVeg ?? (item.food_type === 'Veg');
-  
+
+  const handleAdd = (e) => {
+    e.stopPropagation();
+    dispatch(addToCart(item));
+  };
+
+  const handleRemove = (e) => {
+    e.stopPropagation();
+    if (quantity > 0) {
+      dispatch(removeFromCart(itemId));
+    }
+  };
+
   return (
     <div className="min-w-[200px] w-[200px] bg-white rounded-xl border border-red-200 overflow-hidden hover:border-primary transition-all shadow-sm hover:shadow-md group flex-shrink-0 flex flex-col">
       {/* Image Container */}
@@ -41,11 +62,30 @@ const FoodCard = ({ item }) => {
           {/* Add to cart control */}
           <div className="flex items-center h-[26px]">
              <div className="flex items-center bg-gray-50 rounded-l-full h-full px-1 border border-gray-200 border-r-0">
-               <button className="text-gray-500 hover:text-primary px-1.5 text-sm font-medium leading-none">-</button>
-               <span className="text-[11px] font-medium w-3 text-center">0</span>
-               <button className="text-gray-500 hover:text-primary px-1.5 text-sm font-medium leading-none">+</button>
+               <button 
+                 onClick={handleRemove}
+                 disabled={quantity === 0}
+                 className={`px-1.5 text-sm font-medium leading-none transition-colors ${
+                   quantity === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-primary cursor-pointer'
+                 }`}
+                 title="Decrease quantity"
+               >
+                 -
+               </button>
+               <span className="text-[11px] font-medium w-4 text-center">{quantity}</span>
+               <button 
+                 onClick={handleAdd}
+                 className="text-gray-500 hover:text-primary px-1.5 text-sm font-medium leading-none cursor-pointer"
+                 title="Increase quantity"
+               >
+                 +
+               </button>
              </div>
-             <button className="bg-primary text-white h-full px-2 rounded-r-full flex items-center justify-center hover:bg-primary-hover transition-colors shadow-sm">
+             <button 
+               onClick={handleAdd}
+               className="bg-primary text-white h-full px-2 rounded-r-full flex items-center justify-center hover:bg-primary-hover transition-colors shadow-sm cursor-pointer"
+               title="Add to cart"
+             >
                <FiShoppingCart className="text-[12px]" />
              </button>
           </div>
@@ -56,3 +96,4 @@ const FoodCard = ({ item }) => {
 };
 
 export default FoodCard;
+
