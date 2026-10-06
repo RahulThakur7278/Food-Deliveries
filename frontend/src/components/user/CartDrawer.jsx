@@ -27,7 +27,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
       {/* Drawer Container */}
       <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col z-10 transform transition-transform duration-300">
-        
+
         {/* Header */}
         <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-2">
@@ -66,15 +66,15 @@ const CartDrawer = ({ isOpen, onClose }) => {
         ) : (
           <>
             {/* Item List */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 divide-y divide-gray-100">
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
               {cartItems.map((item) => {
                 const itemId = item._id || item.id;
                 const isVeg = item.isVeg ?? (item.food_type === 'Veg');
 
                 return (
-                  <div key={itemId} className="pt-4 first:pt-0 flex items-center gap-3">
+                  <div key={itemId} className="flex items-center gap-3 border border-red-200 rounded-xl p-3 bg-white hover:border-primary transition-all shadow-xs">
                     {/* Item Image */}
-                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0 border border-red-100">
                       <img
                         src={
                           item.images?.[0] || item.image
