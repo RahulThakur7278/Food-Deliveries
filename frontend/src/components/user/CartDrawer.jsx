@@ -11,12 +11,14 @@ import {
   clearCart,
 } from '../../features/cart/cartSlice';
 import { getImageUrl } from '../../utils/imageUrl';
+import { useNavigate } from 'react-router-dom';
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   const cartItems = useSelector(selectCartItems);
   const totalAmount = useSelector(selectCartTotalAmount);
   const totalQuantity = useSelector(selectCartTotalQuantity);
+  const navigate = useNavigate();
 
   if (!isOpen) return null;
 
@@ -161,11 +163,12 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 </button>
                 <button
                   onClick={() => {
-                    alert('Order placed successfully! (Frontend demo)');
-                    dispatch(clearCart());
+                    // alert('Order placed successfully! (Frontend demo)');
+                    // dispatch(clearCart());
                     onClose();
+                    navigate('/checkout');
                   }}
-                  className="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg text-sm font-bold transition-colors shadow-md text-center"
+                  className="flex-1 bg-primary hover:bg-primary-hover cursor-pointer text-white py-2.5 rounded-lg text-sm font-bold transition-colors shadow-md text-center"
                 >
                   Checkout (₹{totalAmount})
                 </button>
