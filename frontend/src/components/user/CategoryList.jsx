@@ -81,9 +81,8 @@ const CategoryList = () => {
           <button
             onClick={() => scroll('left')}
             disabled={!canScrollLeft}
-            className={`absolute left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center shadow-md transition-all ${
-              !canScrollLeft ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110 active:scale-95 cursor-pointer'
-            }`}
+            className={`absolute left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center shadow-md transition-all ${!canScrollLeft ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110 active:scale-95 cursor-pointer'
+              }`}
             aria-label="Scroll left"
           >
             <FaChevronLeft className="w-3 h-3" />
@@ -104,10 +103,10 @@ const CategoryList = () => {
               <div key={category} className="min-w-[120px] w-[120px] cursor-pointer group flex-shrink-0">
                 <div className="h-[130px] rounded-2xl overflow-hidden border border-red-200 group-hover:border-primary transition-all duration-300 flex flex-col bg-gray-50 shadow-sm">
                   <div className="h-[100px] w-full overflow-hidden">
-                    <img 
-                      src={categoryImageMap[category] || 'https://images.unsplash.com/photo-1495195134817-a165d42e2736?w=300&q=80'} 
-                      alt={category} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                    <img
+                      src={categoryImageMap[category] || 'https://images.unsplash.com/photo-1495195134817-a165d42e2736?w=300&q=80'}
+                      alt={category}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div className="h-[30px] w-full flex items-center justify-center bg-gray-200/40">
@@ -123,9 +122,8 @@ const CategoryList = () => {
           <button
             onClick={() => scroll('right')}
             disabled={!canScrollRight}
-            className={`absolute right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center shadow-md transition-all ${
-              !canScrollRight ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110 active:scale-95 cursor-pointer'
-            }`}
+            className={`absolute right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center shadow-md transition-all ${!canScrollRight ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110 active:scale-95 cursor-pointer'
+              }`}
             aria-label="Scroll right"
           >
             <FaChevronRight className="w-3 h-3" />

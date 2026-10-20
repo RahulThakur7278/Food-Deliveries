@@ -28,6 +28,12 @@ const seedDummyOrders = async (shopIds, userId) => {
                 items: [], // Mock items
                 totalAmount: Math.floor(Math.random() * 500) + 100,
                 status: statuses[Math.floor(Math.random() * statuses.length)],
+                paymentMethod: j % 2 === 0 ? 'cod' : 'online',
+                deliveryAddress: {
+                    text: 'Connaught Place, New Delhi',
+                    latitude: 28.6315,
+                    longitude: 77.2167
+                },
                 createdAt: date,
                 updatedAt: date
             });
